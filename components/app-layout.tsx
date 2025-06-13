@@ -42,7 +42,7 @@ export function AppLayout({ children, pageTitle, searchPlaceholder = "Search..."
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top Bar - Original height restored */}
-        <div className="bg-slate-600 border-b border-slate-500 px-4 lg:px-6 py-3 flex items-center justify-between">
+        <div className="bg-slate-600 border-b border-slate-500 px-4 lg:px-6 py-2 flex items-center justify-between">
           {/* Left Side - Mobile Menu + Back + Page Title */}
           <div className="flex items-center gap-4">
             {/* Mobile Menu Button */}
@@ -84,7 +84,7 @@ export function AppLayout({ children, pageTitle, searchPlaceholder = "Search..."
             <Link href="/notifications">
               <Button
                 variant="ghost"
-                className="h-12 w-12 lg:h-16 lg:w-16 p-2 text-yellow-400 hover:bg-slate-500 hover:text-yellow-300 transition-all duration-200 hover:scale-110 relative"
+                className="h-10 w-10 lg:h-12 lg:w-12 p-2 text-yellow-400 hover:bg-slate-500 hover:text-yellow-300 transition-all duration-200 hover:scale-110 relative"
               >
                 <Bell
                   className="h-8 w-8 lg:h-12 lg:w-12 transition-transform duration-200 hover:animate-pulse"

@@ -336,103 +336,108 @@ export default function NotificationsPage() {
                         notification.priority,
                       )} ${!notification.isRead ? "bg-blue-50 border-blue-200" : "bg-white"}`}
                     >
-                      <CardContent className="p-4">
-                        <div className="flex items-start gap-4">
-                          {/* Notification Icon */}
-                          <div className="flex-shrink-0 mt-1">{getNotificationIcon(notification.type)}</div>
+                <CardContent className="p-4">
+  <div className="flex items-start gap-4">
+    {/* Notification Icon */}
+    <div className="flex-shrink-0 mt-1">{getNotificationIcon(notification.type)}</div>
 
-                          {/* User Avatar */}
-                          <Avatar className="h-10 w-10 flex-shrink-0">
-                            <AvatarImage src={notification.user.avatar || "/placeholder.svg"} />
-                            <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white">
-                              {notification.user.name[0]}
-                            </AvatarFallback>
-                          </Avatar>
+    {/* User Avatar */}
+    <Avatar className="h-10 w-10 flex-shrink-0">
+      <AvatarImage src={notification.user.avatar || "/placeholder.svg"} />
+      <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white">
+        {notification.user.name[0]}
+      </AvatarFallback>
+    </Avatar>
 
-                          {/* Notification Content */}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <h3
-                                    className={`font-medium break-words ${
-                                      !notification.isRead ? "text-gray-900" : "text-gray-700"
-                                    }`}
-                                  >
-                                    {notification.title}
-                                  </h3>
-                                  {!notification.isRead && (
-                                    <div className="h-2 w-2 bg-blue-500 rounded-full flex-shrink-0"></div>
-                                  )}
-                                  {notification.user.verified && (
-                                    <Badge variant="secondary" className="bg-blue-100 text-blue-800 text-xs">
-                                      Verified
-                                    </Badge>
-                                  )}
-                                </div>
-                                <p className="text-sm text-gray-600 break-words mb-2">{notification.message}</p>
-                                <div className="flex items-center gap-2 text-xs text-gray-500">
-                                  <Clock className="h-3 w-3" />
-                                  <span>{notification.timestamp}</span>
-                                  {notification.priority === "high" && (
-                                    <Badge variant="destructive" className="text-xs">
-                                      High Priority
-                                    </Badge>
-                                  )}
-                                </div>
-                              </div>
+    {/* Notification Content */}
+    <div className="flex-1 min-w-0">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2 mb-1">
+          <h3
+            className={`font-medium break-words ${
+              !notification.isRead ? "text-gray-900" : "text-gray-700"
+            }`}
+          >
+            {notification.title}
+          </h3>
+          {!notification.isRead && (
+            <div className="h-2 w-2 bg-blue-500 rounded-full flex-shrink-0"></div>
+          )}
+          {notification.user.verified && (
+            <Badge variant="secondary" className="bg-blue-100 text-blue-800 text-xs">
+              Verified
+            </Badge>
+          )}
+        </div>
 
-                              {/* Action Menu */}
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                    <MoreHorizontal className="h-4 w-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  {!notification.isRead && (
-                                    <DropdownMenuItem onClick={() => markAsRead(notification.id)}>
-                                      <Check className="mr-2 h-4 w-4" />
-                                      Mark as read
-                                    </DropdownMenuItem>
-                                  )}
-                                  <DropdownMenuItem asChild>
-                                    <Link href={notification.actionUrl}>
-                                      <Share2 className="mr-2 h-4 w-4" />
-                                      View details
-                                    </Link>
-                                  </DropdownMenuItem>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem
-                                    onClick={() => deleteNotification(notification.id)}
-                                    className="text-red-600"
-                                  >
-                                    <Trash2 className="mr-2 h-4 w-4" />
-                                    Delete
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </div>
+        {/* 3 Dots Menu (Right side of the title) */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+              <MoreHorizontal className="h-4 w-4 text-gray-600" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {!notification.isRead && (
+              <DropdownMenuItem onClick={() => markAsRead(notification.id)}>
+                <Check className="mr-2 h-4 w-4" />
+                Mark as read
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem asChild>
+              <Link href={notification.actionUrl}>
+                <Share2 className="mr-2 h-4 w-4" />
+                View details
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={() => deleteNotification(notification.id)}
+              className="text-red-600"
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
 
-                            {/* Action Buttons */}
-                            <div className="flex gap-2 mt-3">
-                              <Button variant="outline" size="sm" asChild>
-                                <Link href={notification.actionUrl}>View</Link>
-                              </Button>
-                              {!notification.isRead && (
-                                <Button
-                                  onClick={() => markAsRead(notification.id)}
-                                  variant="ghost"
-                                  size="sm"
-                                  className="text-blue-600 hover:text-blue-700"
-                                >
-                                  Mark as read
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
+      {/* Notification Message */}
+      <div className="flex justify-between items-center">
+        <p className="text-sm text-gray-600 break-words mb-2 flex-1">{notification.message}</p>
+
+        {/* Action Buttons (aligned to the right) */}
+        <div className="ml-4 flex gap-2 items-center"> {/* Added ml-4 to give spacing between message and buttons */}
+          <Button variant="outline" size="sm" asChild>
+            <Link href={notification.actionUrl}>View</Link>
+          </Button>
+          {!notification.isRead && (
+            <Button
+              onClick={() => markAsRead(notification.id)}
+              variant="ghost"
+              size="sm"
+              className="text-blue-600 hover:text-blue-700 mt-2"
+            >
+              Mark as read
+            </Button>
+          )}
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
+        <Clock className="h-3 w-3" />
+        <span>{notification.timestamp}</span>
+        {notification.priority === "high" && (
+          <Badge variant="destructive" className="text-xs">
+            High Priority
+          </Badge>
+        )}
+      </div>
+    </div>
+  </div>
+</CardContent>
+
+
                     </Card>
                   ))
                 )}

@@ -369,8 +369,8 @@ export function Sidebar({ className }: SidebarProps) {
               Ask a Question
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-5xl w-[95vw] sm:w-[90vw] lg:w-[900px] max-h-[95vh] overflow-hidden">
-            <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+          <DialogContent className="max-w-5xl w-[100vw] sm:w-[100vw] lg:w-[1000px] max-h-[95vh] overflow-hidden pt-2 gap-0">
+            <DialogHeader className="flex flex-row items-center gap-x-2 pb-0">
               <DialogTitle className="text-lg font-semibold">Ask a Question</DialogTitle>
               <TooltipProvider delayDuration={100}>
                 <Tooltip>
@@ -384,7 +384,7 @@ export function Sidebar({ className }: SidebarProps) {
                       Writing Tips?
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent className="w-72 p-4">
+                  <TooltipContent className="w-72 p-2">
                     <div className="space-y-2">
                       <div className="flex items-center gap-2">
                         <div className="w-4 h-4 rounded-full bg-green-100 flex items-center justify-center">
@@ -411,12 +411,12 @@ export function Sidebar({ className }: SidebarProps) {
             </DialogHeader>
 
             {/* 2-Column Layout */}
-            <div className="grid grid-cols-1 lg:grid-cols-[60%_40%] gap-4 h-[calc(90vh-140px)] overflow-hidden">
+            <div className="grid grid-cols-1 lg:grid-cols-[60%_40%] gap-0 h-[calc(90vh-140px)] overflow-hidden">
               {/* Left Section: Ask Question Form */}
               <div className="overflow-y-auto px-1">
-                <div className="space-y-4 lg:space-y-6">
+                <div className="space-y-3 lg:space-y-3">
                   {/* Question Title */}
-                  <div className="space-y-2">
+                  <div className="space-y-1">
                     <Label htmlFor="question-title" className="text-sm lg:text-base">
                       Question Title *
                     </Label>
@@ -482,15 +482,15 @@ export function Sidebar({ className }: SidebarProps) {
                         </button>
                       </div>
                     </div>
-                    <p className="text-xs lg:text-sm text-gray-500">Select the category that best fits your question</p>
+                    {/* <p className="text-xs lg:text-sm text-gray-500">Select the category that best fits your question</p> */}
                   </div>
                 </div>
               </div>
 
               {/* Right Section: Recent Threads */}
-              <div className="p-4 lg:p-6 overflow-y-auto">
+              <div className="p-4 lg:p-3 pt-0">
                 <div className="flex items-center gap-2 mb-4">
-                  <MessageSquare className="h-4 w-4 lg:h-5 lg:w-5 text-gray-600" />
+                  <MessageSquare className="h-4 w-5 lg:h-5 lg:w-6 text-gray-600" />
                   <h3 className="font-semibold text-gray-900 text-sm lg:text-base">Recent Threads</h3>
                 </div>
 
@@ -583,11 +583,11 @@ export function Sidebar({ className }: SidebarProps) {
 
       {/* Create Group Dialog */}
       <Dialog open={createGroupOpen} onOpenChange={setCreateGroupOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-3">
+          <DialogHeader className="gap-x-2 pb-0">
             <DialogTitle>Create Private Group</DialogTitle>
           </DialogHeader>
-          <div className="grid grid-cols-2 gap-6 py-4">
+          <div className="grid grid-cols-2 gap-6 py-2 pt-0">
             {/* Left Column: Group Name and Description */}
             <div className="space-y-4">
               <div className="space-y-2">
