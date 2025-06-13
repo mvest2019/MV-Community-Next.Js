@@ -225,7 +225,7 @@ export function ManageGroupDialog({ group, otherGroups }: ManageGroupDialogProps
           </Button>
         </DialogTrigger>
         <DialogContent className="max-w-4xl max-h-[90vh] p-0">
-          <DialogHeader className="px-6 pt-6 pb-1">
+          <DialogHeader className="px-6 pt-3 pb-1">
             <DialogTitle className="text-xl flex items-center gap-2">
               <Settings className="h-5 w-5" />
               Manage Group
@@ -236,7 +236,7 @@ export function ManageGroupDialog({ group, otherGroups }: ManageGroupDialogProps
             {/* Top Group Info Section */}
             <Card className="mb-4">
               <CardContent className="p-4">
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
                   <div className="relative h-16 w-16 rounded-lg overflow-hidden flex-shrink-0">
                     <Image src={group.avatar || "/placeholder.svg"} alt={group.name} fill className="object-cover" />
                   </div>
