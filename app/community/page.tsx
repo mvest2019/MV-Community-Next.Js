@@ -120,8 +120,8 @@ export default function CommunityPage() {
       <div className="p-3 sm:p-4 lg:p-6">
         <div className="max-w-4xl mx-auto">
           {/* Community Stats */}
-         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-4">
-  <Card className="w-48 sm:w-64"> {/* Set width of card here */}
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 mb-4">
+  <Card className="w-48 sm:w-64 mx-auto"> {/* Set width of card here */}
     <CardContent className="p-3 sm:p-4 text-center">
       <div className="flex items-center justify-center mb-2">
         <Users className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500 mr-2" />
@@ -130,7 +130,7 @@ export default function CommunityPage() {
       <div className="text-xs sm:text-sm text-gray-600">Active Members</div>
     </CardContent>
   </Card>
-  <Card className="w-48 sm:w-64"> {/* Set width of card here */}
+  <Card className="w-48 sm:w-64 mx-auto"> {/* Set width of card here */}
     <CardContent className="p-3 sm:p-4 text-center">
       <div className="flex items-center justify-center mb-2">
         <MessageSquare className="h-4 w-4 sm:h-5 sm:w-5 text-green-500 mr-2" />
@@ -139,7 +139,7 @@ export default function CommunityPage() {
       <div className="text-xs sm:text-sm text-gray-600">Discussions</div>
     </CardContent>
   </Card>
-  <Card className="w-48 sm:w-64"> {/* Set width of card here */}
+  <Card className="w-48 sm:w-64 mx-auto"> {/* Set width of card here */}
     <CardContent className="p-3 sm:p-4 text-center">
       <div className="flex items-center justify-center mb-2">
         <HelpCircle className="h-4 w-4 sm:h-5 sm:w-5 text-purple-500 mr-2" />
@@ -149,6 +149,7 @@ export default function CommunityPage() {
     </CardContent>
   </Card>
 </div>
+
 
 
           {/* Community Update Alert - Capsule Style */}

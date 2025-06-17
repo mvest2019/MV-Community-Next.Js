@@ -583,7 +583,7 @@ export function Sidebar({ className }: SidebarProps) {
 
       {/* Create Group Dialog */}
       <Dialog open={createGroupOpen} onOpenChange={setCreateGroupOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-3">
+        <DialogContent className="max-w-4xl w-[95vw] sm:w-[90vw] lg:w-[800px] max-h-[90vh] p-3">
           <DialogHeader className="gap-x-2 pb-0">
             <DialogTitle>Create Private Group</DialogTitle>
           </DialogHeader>
@@ -600,20 +600,23 @@ export function Sidebar({ className }: SidebarProps) {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="group-description">Group Description *</Label>
+                 <div className="space-y-2">
+                <Label htmlFor="group-description" className="text-base font-medium">
+                  Group Description *
+                </Label>
                 <Textarea
                   id="group-description"
-                  placeholder="Describe the purpose of your group..."
+                  placeholder="Describe the purpose of your group, what topics will be discussed, and what members can expect..."
                   value={newGroupData.description || ""}
                   onChange={(e) => setNewGroupData({ ...newGroupData, description: e.target.value })}
-                  rows={3}
+                  rows={6}
+                  className="text-base resize-none"
                 />
               </div>
             </div>
 
             {/* Right Column: Invitations */}
-            <div className="space-y-4">
+            <div className="space-y-4 overflow-y-auto">
               <div className="space-y-2">
                 <Label htmlFor="group-invitations">Invitations (Email IDs)</Label>
                 <Textarea

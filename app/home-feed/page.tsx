@@ -288,7 +288,7 @@ export default function HomeFeedPage() {
                 className="hover:shadow-md transition-shadow cursor-pointer"
                 onClick={() => navigateToPost(post)}
               >
-                <CardContent className="p-6">
+                <CardContent className="p-4">
                   {/* Post Header */}
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-start gap-3 flex-1">

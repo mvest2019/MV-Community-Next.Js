@@ -74,7 +74,7 @@ export default function PublicGroupsPage() {
       isActive: true,
       lastActivity: "1 hour ago",
       weeklyPosts: 32,
-      tags: ["permian-basin", "drilling", "lease-negotiation"],
+      tags: ["permian-basin", "drilling"],
       featured: false,
     },
     {
@@ -106,7 +106,7 @@ export default function PublicGroupsPage() {
       isActive: true,
       lastActivity: "5 hours ago",
       weeklyPosts: 18,
-      tags: ["eagle-ford", "shale", "community"],
+      tags: ["eagle-ford", "shale"],
       featured: false,
     },
     {
@@ -122,7 +122,7 @@ export default function PublicGroupsPage() {
       isActive: true,
       lastActivity: "4 hours ago",
       weeklyPosts: 25,
-      tags: ["royalty", "payments", "support"],
+      tags: ["royalty", "payments"],
       featured: false,
     },
     {
@@ -138,7 +138,7 @@ export default function PublicGroupsPage() {
       isActive: true,
       lastActivity: "6 hours ago",
       weeklyPosts: 22,
-      tags: ["market-analysis", "oil-prices", "forecasting"],
+      tags: ["market-analysis", "oil-prices"],
       featured: true,
     },
     {
@@ -170,7 +170,7 @@ export default function PublicGroupsPage() {
       isActive: true,
       lastActivity: "12 hours ago",
       weeklyPosts: 12,
-      tags: ["oklahoma", "mineral-rights", "regional"],
+      tags: ["oklahoma", "mineral-rights"],
       featured: false,
     },
   ])
@@ -400,7 +400,7 @@ export default function PublicGroupsPage() {
                               <Eye className="h-4 w-4 mr-2" />
                               View
                             </Button>
-                            <Button
+                            {/* <Button
                               onClick={(e) => {
                                 e.stopPropagation()
                                 handleJoinGroup(group.id)
@@ -420,11 +420,11 @@ export default function PublicGroupsPage() {
                                   Join
                                 </>
                               )}
-                            </Button>
+                            </Button> */}
                           </div>
 
                           {/* Send Invitation Button */}
-                          <Button
+                          {/* <Button
                             variant="ghost"
                             className="w-full mt-2 text-sm text-blue-600 hover:bg-blue-50"
                             onClick={(e) => {
@@ -434,7 +434,7 @@ export default function PublicGroupsPage() {
                           >
                             <Mail className="h-4 w-4 mr-2" />
                             Send Invitation
-                          </Button>
+                          </Button> */}
 
                           {/* Last Activity */}
                           <div className="flex items-center gap-1 text-xs text-gray-400 mt-2">
@@ -544,7 +544,7 @@ export default function PublicGroupsPage() {
                               <Eye className="h-4 w-4 mr-2" />
                               View
                             </Button>
-                            <Button
+                            {/* <Button
                               onClick={(e) => {
                                 e.stopPropagation()
                                 handleJoinGroup(group.id)
@@ -564,11 +564,11 @@ export default function PublicGroupsPage() {
                                   Join
                                 </>
                               )}
-                            </Button>
+                            </Button> */}
                           </div>
 
                           {/* Send Invitation Button */}
-                          <Button
+                          {/* <Button
                             variant="ghost"
                             className="w-full mt-2 text-sm text-blue-600 hover:bg-blue-50"
                             onClick={(e) => {
@@ -578,7 +578,7 @@ export default function PublicGroupsPage() {
                           >
                             <Mail className="h-4 w-4 mr-2" />
                             Send Invitation
-                          </Button>
+                          </Button> */}
                         </div>
                       </CardContent>
                     </Card>
@@ -663,7 +663,7 @@ export default function PublicGroupsPage() {
                               <Eye className="h-4 w-4 mr-2" />
                               View
                             </Button>
-                            <Button
+                            {/* <Button
                               onClick={(e) => {
                                 e.stopPropagation()
                                 handleJoinGroup(group.id)
@@ -683,11 +683,11 @@ export default function PublicGroupsPage() {
                                   Join
                                 </>
                               )}
-                            </Button>
+                            </Button> */}
                           </div>
 
                           {/* Send Invitation Button */}
-                          <Button
+                          {/* <Button
                             variant="ghost"
                             className="w-full mt-2 text-sm text-blue-600 hover:bg-blue-50"
                             onClick={(e) => {
@@ -697,7 +697,7 @@ export default function PublicGroupsPage() {
                           >
                             <Mail className="h-4 w-4 mr-2" />
                             Send Invitation
-                          </Button>
+                          </Button> */}
                         </div>
                       </CardContent>
                     </Card>

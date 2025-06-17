@@ -249,7 +249,7 @@ export default function MyGroupsPage() {
                           <DialogHeader>
                             <DialogTitle>Delete Group</DialogTitle>
                           </DialogHeader>
-                          <div className="py-4">
+                          <div className="py-0">
                             <p className="text-gray-600">
                               Are you sure you want to delete <span className="font-semibold">{group.name}</span>?
                               <span className="text-red-600 block mt-2">

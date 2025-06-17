@@ -65,6 +65,9 @@ export default function PostDetailPage() {
   const [isNotificationEnabled, setIsNotificationEnabled] = useState(false)
   const [showAnswerEditor, setShowAnswerEditor] = useState(false)
   const [answerContent, setAnswerContent] = useState("")
+   const [showUserProfile, setShowUserProfile] = useState(false)
+  const [selectedUser, setSelectedUser] = useState<any>(null)
+  const [followingUsers, setFollowingUsers] = useState<Set<string>>(new Set(["GeologyExpertTX", "RoyaltyExpert"]))
   const [replyingToAnswerComment, setReplyingToAnswerComment] = useState<{
     answerId: number
     commentId: number | null
@@ -281,6 +284,88 @@ export default function PostDetailPage() {
     },
   ])
 
+  // Sample user profiles data
+  const userProfiles = {
+    SarahM_Landowner: {
+      username: "SarahM_Landowner",
+      fullName: "Sarah Mitchell",
+      avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=80&h=80&fit=crop&crop=face",
+      role: "Mineral Rights Owner",
+      tagline: "Advocating for fair royalty payments in Texas",
+      socialLinks: {
+        linkedin: "https://linkedin.com/in/sarahmitchell",
+        twitter: "https://twitter.com/sarahm_landowner",
+      },
+      followers: 1247,
+      following: 89,
+      totalPosts: 127,
+      verified: true,
+      joinedDate: "March 2023",
+    },
+    GeologyExpertTX: {
+      username: "GeologyExpertTX",
+      fullName: "Dr. Michael Rodriguez",
+      avatar: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=80&h=80&fit=crop&crop=face",
+      role: "Petroleum Geologist",
+      tagline: "Helping landowners understand their mineral rights",
+      socialLinks: {
+        linkedin: "https://linkedin.com/in/michaelrodriguez",
+        twitter: "https://twitter.com/geologyexperttx",
+      },
+      followers: 3421,
+      following: 156,
+      totalPosts: 892,
+      verified: true,
+      joinedDate: "January 2022",
+    },
+    LegalEagle: {
+      username: "LegalEagle",
+      fullName: "Jennifer Thompson, Esq.",
+      avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop&crop=face",
+      role: "Oil & Gas Attorney",
+      tagline: "Protecting landowner rights for over 15 years",
+      socialLinks: {
+        linkedin: "https://linkedin.com/in/jenniferthompson",
+        twitter: "https://twitter.com/legaleagle_tx",
+      },
+      followers: 2156,
+      following: 234,
+      totalPosts: 445,
+      verified: true,
+      joinedDate: "June 2021",
+    },
+    RoyaltyExpert: {
+      username: "RoyaltyExpert",
+      fullName: "David Chen",
+      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&crop=face",
+      role: "Royalty Consultant",
+      tagline: "Maximizing royalty returns through expert analysis",
+      socialLinks: {
+        linkedin: "https://linkedin.com/in/davidchen",
+        twitter: "https://twitter.com/royaltyexpert",
+      },
+      followers: 1876,
+      following: 312,
+      totalPosts: 623,
+      verified: true,
+      joinedDate: "September 2022",
+    },
+    TexasLandman: {
+      username: "TexasLandman",
+      fullName: "Robert Johnson",
+      avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=80&h=80&fit=crop&crop=face",
+      role: "Professional Landman",
+      tagline: "Connecting landowners with opportunities",
+      socialLinks: {
+        linkedin: "https://linkedin.com/in/robertjohnson",
+      },
+      followers: 892,
+      following: 445,
+      totalPosts: 234,
+      verified: false,
+      joinedDate: "November 2023",
+    },
+  }
   const handleQuestionVote = (voteType: "up" | "down") => {
     const newVotes = { ...questionVotes }
 
@@ -631,7 +716,30 @@ export default function PostDetailPage() {
       duration: 4000,
     })
   }
-
+   const handleUserClick = (username: string) => {
+    const user = userProfiles[username as keyof typeof userProfiles]
+    if (user) {
+      setSelectedUser(user)
+      setShowUserProfile(true)
+    }
+  }
+  const handleFollowToggle = (username: string) => {
+    const newFollowingUsers = new Set(followingUsers)
+    if (followingUsers.has(username)) {
+      newFollowingUsers.delete(username)
+      toast({
+        title: "Unfollowed",
+        description: `You are no longer following ${userProfiles[username as keyof typeof userProfiles]?.fullName}`,
+      })
+    } else {
+      newFollowingUsers.add(username)
+      toast({
+        title: "Follow request sent",
+        description: `Follow request sent to ${userProfiles[username as keyof typeof userProfiles]?.fullName}`,
+      })
+    }
+    setFollowingUsers(newFollowingUsers)
+  }
   return (
     <AppLayout
       backLink={{
@@ -642,7 +750,7 @@ export default function PostDetailPage() {
       searchPlaceholder="Search in group..."
     >
       <div className="p-4 lg:p-6">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-6xl mx-auto">
           {/* Single Card Layout */}
           <Card className="mb-6">
             <CardContent className="p-6">
@@ -654,13 +762,23 @@ export default function PostDetailPage() {
                 {/* Question Meta */}
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-start gap-3 flex-1">
-                    <Avatar className="h-10 w-10 flex-shrink-0">
-                      <AvatarImage src={postData.author.avatar || "/placeholder.svg"} />
-                      <AvatarFallback>{postData.author.name[0]}</AvatarFallback>
-                    </Avatar>
+                    <button
+                      onClick={() => handleUserClick(postData.author.username)}
+                      className="flex-shrink-0 hover:opacity-80 transition-opacity"
+                    >
+                      <Avatar className="h-10 w-10">
+                        <AvatarImage src={postData.author.avatar || "/placeholder.svg"} />
+                        <AvatarFallback>{postData.author.name[0]}</AvatarFallback>
+                      </Avatar>
+                    </button>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold text-gray-900 break-words">{postData.author.name}</h3>
+                        <button
+                          onClick={() => handleUserClick(postData.author.username)}
+                          className="font-semibold text-gray-900 break-words hover:text-blue-600 transition-colors"
+                        >
+                          {postData.author.name}
+                        </button>
                         {postData.author.verified && (
                           <Badge variant="secondary" className="bg-blue-100 text-blue-800 text-xs">
                             Verified
@@ -672,7 +790,12 @@ export default function PostDetailPage() {
                         </div>
                       </div>
                       <div className="flex flex-wrap items-center gap-2 text-sm text-gray-500">
-                        <span>@{postData.author.username}</span>
+                        <button
+                          onClick={() => handleUserClick(postData.author.username)}
+                          className="hover:text-blue-600 transition-colors"
+                        >
+                          @{postData.author.username}
+                        </button>
                         <span>•</span>
                         <span>{postData.timestamp}</span>
                         <span>•</span>
@@ -799,7 +922,7 @@ export default function PostDetailPage() {
 
                 {/* Question Comments */}
                 {(questionComments.length > 0 || showReplyEditor) && (
-                  <div className="mt-4 pt-4 border-t border-gray-200">
+                  <div className="mt-2 pt-2 ">
                     {/* Add Comment Editor */}
                     {showReplyEditor && (
                       <div className="mb-4">
@@ -848,7 +971,7 @@ export default function PostDetailPage() {
                             <div className="flex flex-col items-center mr-1">
                               <button
                                 onClick={() => handleCommentVote(comment.id, "up")}
-                                className={`flex items-center justify-center h-6 w-6 rounded-md transition-colors ${
+                                className={`flex justify-center h-5 w-6 rounded-md transition-colors ${
                                   commentVotes[comment.id]?.userVote === "up"
                                     ? "bg-green-100 text-green-700"
                                     : "text-gray-400 hover:bg-gray-100"
@@ -857,12 +980,12 @@ export default function PostDetailPage() {
                               >
                                 <ChevronUp className="h-4 w-4" />
                               </button>
-                              <span className="text-xs font-medium text-gray-600 my-0.5">
+                              <span className="text-xs font-medium text-gray-600">
                                 {(commentVotes[comment.id]?.upvotes || 0) - (commentVotes[comment.id]?.downvotes || 0)}
                               </span>
                               <button
                                 onClick={() => handleCommentVote(comment.id, "down")}
-                                className={`flex items-center justify-center h-6 w-6 rounded-md transition-colors ${
+                                className={`flex justify-center h-5 w-6 rounded-md transition-colors ${
                                   commentVotes[comment.id]?.userVote === "down"
                                     ? "bg-red-100 text-red-700"
                                     : "text-gray-400 hover:bg-gray-100"
@@ -892,19 +1015,14 @@ export default function PostDetailPage() {
               </div>
 
               {/* Separator between Question and Answers */}
-              <Separator className="my-6" />
+              <Separator className="my-6 mt-2 mb-3" />
 
               {/* Answers Section */}
               <div>
                 {/* Answer Count */}
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-semibold text-gray-900">{answers.length} Answers</h2>
-                  <Button
-                    onClick={() => setShowAnswerEditor(!showAnswerEditor)}
-                    className="bg-blue-600 hover:bg-blue-700"
-                  >
-                    Post Your Answer
-                  </Button>
+                <div className="flex items-center justify-between mb-2">
+                  <h2 className="text-xl font-semibold text-gray-900">{answers.length} Replays</h2>
+                 
                 </div>
 
                 {/* Answer Editor */}
@@ -1064,12 +1182,12 @@ export default function PostDetailPage() {
                           <div className="flex-1">
                             {/* Answer Content */}
                             <div
-                              className="prose prose-gray max-w-none mb-4"
+                              className="prose prose-gray max-w-none mb-2"
                               dangerouslySetInnerHTML={{ __html: answer.content }}
                             />
 
                             {/* Answer Author */}
-                            <div className="flex items-center justify-between mt-4 mb-4">
+                            <div className="flex items-center justify-between mt-2 mb-2">
                               <div className="text-sm text-gray-500">answered {answer.timestamp}</div>
                               <div className="flex items-center gap-3 bg-blue-50 p-2 rounded-md">
                                 <Avatar className="h-8 w-8 flex-shrink-0">
@@ -1285,6 +1403,132 @@ export default function PostDetailPage() {
                     <Printer className="h-6 w-6 text-gray-600" />
                     <span className="text-xs">Print</span>
                   </Button>
+                </div>
+              </div>
+            </div>
+          )}
+           {/* User Profile Popup */}
+          {showUserProfile && selectedUser && (
+            <div
+              className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2"
+              onClick={() => setShowUserProfile(false)}
+            >
+              <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
+                {/* Header with Close Button */}
+                <div className="relative p-2 border-b border-gray-100">
+                  <button
+                    onClick={() => setShowUserProfile(false)}
+                    className="absolute top-3 right-3 p-1.5 hover:bg-gray-100 rounded-full transition-colors"
+                  >
+                    <X className="h-4 w-4 text-gray-500" />
+                  </button>
+                  <h3 className="text-lg font-semibold text-gray-900">User Profile</h3>
+                </div>
+
+                {/* Main Content - Two Sections */}
+                <div className="p-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Section 1: Profile Information */}
+                    <div className="space-y-3">
+                      <div className="flex items-start gap-3">
+                        <div className="relative flex-shrink-0">
+                          <Avatar className="h-16 w-16 border-2 border-gray-200">
+                            <AvatarImage src={selectedUser.avatar || "/placeholder.svg"} />
+                            <AvatarFallback className="text-lg font-semibold">
+                              {selectedUser.fullName[0]}
+                            </AvatarFallback>
+                          </Avatar>
+                          {selectedUser.verified && (
+                            <div className="absolute -bottom-1 -right-1 bg-blue-500 rounded-full p-1">
+                              <Check className="h-3 w-3 text-white" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h2 className="text-lg font-bold text-gray-900 truncate">{selectedUser.fullName}</h2>
+                          <p className="text-blue-600 font-medium text-sm">{selectedUser.role}</p>
+                          <p className="text-xs text-gray-500">@{selectedUser.username}</p>
+                        </div>
+                      </div>
+
+                      <div className="bg-gray-50 rounded-lg p-2">
+                        <p className="text-sm text-gray-700 leading-relaxed">{selectedUser.tagline}</p>
+                      </div>
+
+                      <div className="text-xs text-gray-500">Joined {selectedUser.joinedDate}</div>
+                    </div>
+
+                    {/* Section 2: Social & Engagement Information */}
+                    <div className="space-y-3">
+                      {/* Stats Grid */}
+                      <div className="grid grid-cols-3 gap-2 text-center">
+                        <div className="bg-gray-50 rounded-lg p-2">
+                          <div className="text-lg font-bold text-gray-900">
+                            {selectedUser.totalPosts.toLocaleString()}
+                          </div>
+                          <div className="text-xs text-gray-500">Posts</div>
+                        </div>
+                        <div className="bg-gray-50 rounded-lg p-2">
+                          <div className="text-lg font-bold text-gray-900">
+                            {selectedUser.followers.toLocaleString()}
+                          </div>
+                          <div className="text-xs text-gray-500">Followers</div>
+                        </div>
+                        <div className="bg-gray-50 rounded-lg p-2">
+                          <div className="text-lg font-bold text-gray-900">
+                            {selectedUser.following.toLocaleString()}
+                          </div>
+                          <div className="text-xs text-gray-500">Following</div>
+                        </div>
+                      </div>
+
+                      {/* Social Media Links */}
+                      <div>
+                        <div className="text-sm font-medium text-gray-700 mb-2">Social Links</div>
+                        <div className="flex gap-2">
+                          {selectedUser.socialLinks.linkedin && (
+                            <a
+                              href={selectedUser.socialLinks.linkedin}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors text-sm"
+                            >
+                              <Linkedin className="h-4 w-4 text-blue-600" />
+                              <span className="text-blue-700 font-medium">LinkedIn</span>
+                            </a>
+                          )}
+                          {selectedUser.socialLinks.twitter && (
+                            <a
+                              href={selectedUser.socialLinks.twitter}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors text-sm"
+                            >
+                              <Twitter className="h-4 w-4 text-blue-400" />
+                              <span className="text-blue-700 font-medium">Twitter</span>
+                            </a>
+                          )}
+                        </div>
+                        {!selectedUser.socialLinks.linkedin && !selectedUser.socialLinks.twitter && (
+                          <p className="text-xs text-gray-400">No social links available</p>
+                        )}
+                      </div>
+
+                      {/* Follow Button */}
+                      {/* {selectedUser.username !== "SarahM_Landowner" && ( */}
+                        <Button
+                          onClick={() => handleFollowToggle(selectedUser.username)}
+                          className={`w-full ${
+                            followingUsers.has(selectedUser.username)
+                              ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                              : "bg-blue-600 text-white hover:bg-blue-700"
+                          }`}
+                        >
+                          {followingUsers.has(selectedUser.username) ? "Unfollow" : "Send Follow Request"}
+                        </Button>
+                      {/* // )} */}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
