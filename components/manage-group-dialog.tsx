@@ -20,8 +20,9 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Card, CardContent } from "@/components/ui/card"
 import { useToast } from "@/components/ui/use-toast"
-import { Settings, Users, MessageSquare, Clock, Search, X, UserMinus, Mail, Copy, ArrowRightLeft } from "lucide-react"
+import { Settings, Users, MessageSquare, Clock, Search, X, UserMinus, Mail, Copy, ArrowRightLeft, Upload, Trash2, Eye, Camera } from "lucide-react"
 import Image from "next/image"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
 interface Member {
   id: number
@@ -59,6 +60,12 @@ export function ManageGroupDialog({ group, otherGroups }: ManageGroupDialogProps
   const [showMergeConfirm, setShowMergeConfirm] = useState(false)
   const [selectedGroupToMerge, setSelectedGroupToMerge] = useState<string>("")
   const [isOpen, setIsOpen] = useState(false)
+ const [showViewPhoto, setShowViewPhoto] = useState(false)
+
+  const [showPhotoMenu, setShowPhotoMenu] = useState(false)
+  const [newProfilePicture, setNewProfilePicture] = useState<string | null>(null)
+  const [showPhotoPreview, setShowPhotoPreview] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
 
   // Sample members data
   const [members, setMembers] = useState<Member[]>([
@@ -214,7 +221,63 @@ export function ManageGroupDialog({ group, otherGroups }: ManageGroupDialogProps
       })
     }
   }
+  // Handle file upload
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        // 5MB limit
+        toast({
+          title: "File too large",
+          description: "Please select an image smaller than 5MB",
+          variant: "destructive",
+        })
+        return
+      }
 
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        setNewProfilePicture(e.target?.result as string)
+        setShowPhotoPreview(true)
+      }
+      reader.readAsDataURL(file)
+    }
+    // Reset the input
+    event.target.value = ""
+  }
+
+  // Handle save new profile picture
+  const handleSaveProfilePicture = async () => {
+    setIsUploading(true)
+
+    // Simulate upload delay
+    await new Promise((resolve) => setTimeout(resolve, 1500))
+
+    setIsUploading(false)
+    setShowPhotoPreview(false)
+    setNewProfilePicture(null)
+
+    toast({
+      title: "Profile picture updated",
+      description: "The group profile picture has been updated successfully",
+    })
+  }
+
+  // Handle remove profile picture
+  const handleRemovePhoto = () => {
+    setNewProfilePicture(null)
+    // Update the group avatar to null to show default icon
+    group.avatar = ""
+    toast({
+      title: "Profile picture removed",
+      description: "The group profile picture has been removed",
+    })
+  }
+
+  // Handle view full photo
+  const handleViewPhoto = () => {
+    setShowViewPhoto(true)
+  }
   return (
     <>
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -234,12 +297,46 @@ export function ManageGroupDialog({ group, otherGroups }: ManageGroupDialogProps
 
           <div className="px-6 overflow-hidden">
             {/* Top Group Info Section */}
-            <Card className="mb-4">
+              <Card className="mb-4">
               <CardContent className="p-4">
-                <div className="flex items-center gap-2">
-                  <div className="relative h-16 w-16 rounded-lg overflow-hidden flex-shrink-0">
-                    <Image src={group.avatar || "/placeholder.svg"} alt={group.name} fill className="object-cover" />
+                <div className="flex items-center gap-4">
+                  <div className="relative">
+                    <DropdownMenu open={showPhotoMenu} onOpenChange={setShowPhotoMenu}>
+                      <DropdownMenuTrigger asChild>
+                        <div className="relative h-16 w-16 rounded-lg overflow-hidden flex-shrink-0 cursor-pointer group">
+                          <Image
+                            src={newProfilePicture || group.avatar || "/placeholder.svg?height=64&width=64&text=Group"}
+                            alt={group.name}
+                            fill
+                            className="object-cover transition-all group-hover:brightness-75"
+                          />
+                          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all flex items-center justify-center">
+                            <Camera className="h-5 w-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </div>
+                        </div>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start" className="w-48">
+                        {/* <DropdownMenuItem onClick={handleViewPhoto}>
+                          <Eye className="h-4 w-4 mr-2" />
+                          View Photo
+                        </DropdownMenuItem> */}
+
+                        <DropdownMenuItem asChild>
+                          <label className="flex items-center cursor-pointer">
+                            <Upload className="h-4 w-4 mr-2" />
+                            {group.avatar ? "Change Photo" : "Upload Photo"}
+                            <input type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
+                          </label>
+                        </DropdownMenuItem>
+
+                        <DropdownMenuItem onClick={handleRemovePhoto} className="text-red-600">
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Remove Photo
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
+
                   <div className="flex-1 min-w-0">
                     <h3 className="font-semibold text-lg text-gray-900 mb-1">{group.name}</h3>
                     <div className="flex flex-wrap gap-3 text-sm text-gray-600">
@@ -458,7 +555,56 @@ export function ManageGroupDialog({ group, otherGroups }: ManageGroupDialogProps
           </DialogFooter>
         </DialogContent>
       </Dialog>
+ {/* Photo Preview Dialog */}
+      <Dialog open={showPhotoPreview} onOpenChange={setShowPhotoPreview}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Update Profile Picture</DialogTitle>
+          </DialogHeader>
 
+          <div className="space-y-4">
+            <div className="relative w-48 h-48 mx-auto rounded-lg overflow-hidden">
+              <Image
+                src={newProfilePicture || "/placeholder.svg"}
+                alt="New profile picture"
+                fill
+                className="object-cover"
+              />
+            </div>
+
+            <p className="text-sm text-gray-600 text-center">This will be the new profile picture for your group.</p>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setShowPhotoPreview(false)} disabled={isUploading}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveProfilePicture} disabled={isUploading}>
+              {isUploading ? "Updating..." : "Save Changes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Photo Dialog */}
+      <Dialog open={showViewPhoto} onOpenChange={setShowViewPhoto}>
+        <DialogContent className="max-w-2xl p-0">
+          <DialogHeader className="px-6 pt-6 pb-2">
+            <DialogTitle className="flex items-center justify-between">
+              Group Photo
+              {/* <Button variant="ghost" size="sm" onClick={() => setShowViewPhoto(false)} className="h-8 w-8 p-0">
+                <X className="h-4 w-4" />
+              </Button> */}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="px-6 pb-6">
+            <div className="relative w-full h-96 rounded-lg overflow-hidden bg-gray-100">
+              <Image src={group.avatar || "/placeholder.svg"} alt={group.name} fill className="object-contain" />
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
       {/* Close Group Confirmation Dialog */}
       <AlertDialog open={showCloseConfirm} onOpenChange={setShowCloseConfirm}>
         <AlertDialogContent>
