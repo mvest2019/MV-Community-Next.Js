@@ -184,14 +184,14 @@ export default function GroupPage() {
       {/* Group Posts */}
       <div className="p-4 lg:p-6">
         <div className="max-w-4xl mx-auto">
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Posts</h2>
+          <div className="mb-4">
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Recent Posts</h2>
           </div>
 
           <div className="space-y-8">
             {groupPosts.map((post) => (
               <Link key={post.id} href={`/groups/${groupId}/post/${post.id}`}>
-                <Card className="hover:shadow-md transition-shadow cursor-pointer">
+                <Card className="hover:shadow-md transition-shadow cursor-pointer mb-3">
                   <CardContent className="p-6">
                     {/* Post Header */}
                     <div className="flex items-start justify-between mb-4">
