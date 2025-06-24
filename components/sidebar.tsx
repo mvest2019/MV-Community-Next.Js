@@ -23,11 +23,11 @@ import {
 import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useToast } from "@/components/ui/use-toast"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Bold, Italic, Underline, List, ListOrdered, Link2 } from "lucide-react"
-import { addQuestion } from "@/services/service"
+import { addQuestion, getPublicGroups } from "@/services/service"
 import { useAuthAction } from "@/hooks/use-auth-action"
 import { LoginPopup } from "./login-popup"
 
@@ -63,7 +63,7 @@ export function Sidebar({ className }: SidebarProps) {
    const [editorContent, setEditorContent] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { executeWithAuth, loginPopupState, closeLoginPopup, handleLoginSuccess } = useAuthAction()
-
+const [publicGroups, setPublicGroups] = useState<{ grpId: number; grpName: string }[]>([])
   // Sample existing posts data
   const existingPosts = [
     {
@@ -187,20 +187,20 @@ export function Sidebar({ className }: SidebarProps) {
   ]
 
   // Sample public groups for categories
-  const publicGroups = [
-    "Mineral Rights",
-    "Lease Negotiation",
-    "Royalty Payments",
-    "Drilling Operations",
-    "Legal Issues",
-    "Market Analysis",
-    "Property Management",
-    "Tax Questions",
-    "General Discussion",
-    "Environmental Impact",
-    "Technology & Innovation",
-    "Investment Opportunities",
-  ]
+  // const publicGroups = [
+  //   "Mineral Rights",
+  //   "Lease Negotiation",
+  //   "Royalty Payments",
+  //   "Drilling Operations",
+  //   "Legal Issues",
+  //   "Market Analysis",
+  //   "Property Management",
+  //   "Tax Questions",
+  //   "General Discussion",
+  //   "Environmental Impact",
+  //   "Technology & Innovation",
+  //   "Investment Opportunities",
+  // ]
 
   const [showAllCategories, setShowAllCategories] = useState(false)
   const defaultCategoriesCount = 4
@@ -357,7 +357,16 @@ export function Sidebar({ className }: SidebarProps) {
       ),
     )
   }
-
+  useEffect(() => {
+    async function fetchGroups() {
+      const response = await getPublicGroups()
+     setPublicGroups(
+        Array.isArray(response)
+          ? response.map((g: any) => ({ grpId: g.grpId, grpName: g.grpName }))
+          : []
+      ) }
+    fetchGroups()
+  }, [])
   return (
     <div className={`bg-slate-700 text-white flex flex-col ${className}`}>
       {/* Logo/Header */}
@@ -599,22 +608,22 @@ export function Sidebar({ className }: SidebarProps) {
                     <div className="space-y-3">
                       {/* Category Tabs */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        {(showAllCategories ? publicGroups : publicGroups.slice(0, defaultCategoriesCount)).map(
-                          (category) => (
-                            <button
-                              key={category}
-                              type="button"
-                              onClick={() => setQuestionData({ ...questionData, category })}
-                              className={`px-3 py-2 text-xs lg:text-sm rounded-lg border transition-colors text-left ${
-                                questionData.category === category
-                                  ? "bg-orange-500 text-white border-orange-500"
-                                  : "bg-white border-gray-300 hover:border-orange-300 hover:bg-orange-50"
-                              }`}
-                            >
-                              {category}
-                            </button>
-                          ),
-                        )}
+                       {(showAllCategories ? publicGroups : publicGroups.slice(0, defaultCategoriesCount)).map(
+  (group) => (
+    <button
+      key={group.grpId}
+      type="button"
+      onClick={() => setQuestionData({ ...questionData, category: group.grpName })}
+      className={`px-3 py-2 text-xs lg:text-sm rounded-lg border transition-colors text-left ${
+        questionData.category === group.grpName
+          ? "bg-orange-500 text-white border-orange-500"
+          : "bg-white border-gray-300 hover:border-orange-300 hover:bg-orange-50"
+      }`}
+    >
+      {group.grpName}
+    </button>
+  )
+)}
 
                         {/* Show More/Less Button */}
                         <button

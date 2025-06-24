@@ -9,7 +9,7 @@ export const addQuestion = async (
  
   try {
     const response = await axios.post(
-      `https://108.181.168.43:3010/api/thread/post`,
+      `https://mineralview-community.mineralview.com/api/thread/post`,
       payload,
     );
     console.log('Response from addQuestion:', response);
@@ -29,7 +29,7 @@ export const getPublicGroups = async (
  
   try {
     const response = await axios.get(
-      `https://108.181.168.43:3010/api/groups`,
+      `https://mineralview-community.mineralview.com/api/getgrouplisting`,
      
     );
     console.log('Response from addQuestion:', response);
