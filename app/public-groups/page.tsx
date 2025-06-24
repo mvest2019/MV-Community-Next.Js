@@ -22,13 +22,17 @@ import {
   Mail,
 } from "lucide-react"
 import Image from "next/image"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { AppLayout } from "@/components/app-layout"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/components/ui/use-toast"
+import { PublicGroupInterface } from "@/types/community-types"
+import { getPublicGroups } from "@/services/service"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Sidebar } from "@/components/sidebar"
 
 export default function PublicGroupsPage() {
   const { toast } = useToast()
@@ -41,139 +45,163 @@ export default function PublicGroupsPage() {
     description: "",
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [loading, setLoading] = useState(true) // <-- Add loading state
+
 
   // Sample public groups data
-  const [publicGroups, setPublicGroups] = useState([
-    {
-      id: 1,
-      name: "Texas Mineral Rights Owners",
-      description: "A community for mineral rights owners in Texas to share experiences and advice.",
-      memberCount: 2847,
-      postCount: 1234,
-      category: "Regional",
-      avatar: "/placeholder.svg?height=80&width=80",
-      coverImage: "/placeholder.svg?height=200&width=400",
-      moderators: ["GeologyExpertTX", "TexasLandman"],
-      isActive: true,
-      lastActivity: "2 hours ago",
-      weeklyPosts: 45,
-      tags: ["texas", "mineral-rights", "landowners"],
-      featured: true,
-    },
-    {
-      id: 2,
-      name: "Permian Basin Landowners",
-      description:
-        "Dedicated to landowners in the Permian Basin region. Share drilling updates, lease negotiations, and market insights.",
-      memberCount: 1456,
-      postCount: 892,
-      category: "Regional",
-      avatar: "/placeholder.svg?height=80&width=80",
-      coverImage: "/placeholder.svg?height=200&width=400",
-      moderators: ["PermianExpert", "DrillingSupervisor"],
-      isActive: true,
-      lastActivity: "1 hour ago",
-      weeklyPosts: 32,
-      tags: ["permian-basin", "drilling"],
-      featured: false,
-    },
-    {
-      id: 3,
-      name: "Lease Negotiation Experts",
-      description: "Professional group for sharing lease negotiation strategies, legal advice, and best practices.",
-      memberCount: 892,
-      postCount: 567,
-      category: "Professional",
-      avatar: "/placeholder.svg?height=80&width=80",
-      coverImage: "/placeholder.svg?height=200&width=400",
-      moderators: ["LegalEagle", "ContractPro"],
-      isActive: true,
-      lastActivity: "3 hours ago",
-      weeklyPosts: 28,
-      tags: ["legal", "negotiation", "contracts"],
-      featured: true,
-    },
-    {
-      id: 4,
-      name: "Eagle Ford Shale Community",
-      description: "Connect with other landowners and industry professionals in the Eagle Ford Shale region.",
-      memberCount: 634,
-      postCount: 423,
-      category: "Regional",
-      avatar: "/placeholder.svg?height=80&width=80",
-      coverImage: "/placeholder.svg?height=200&width=400",
-      moderators: ["EagleFordExpert"],
-      isActive: true,
-      lastActivity: "5 hours ago",
-      weeklyPosts: 18,
-      tags: ["eagle-ford", "shale"],
-      featured: false,
-    },
-    {
-      id: 5,
-      name: "Royalty Payment Support",
-      description: "Support group for landowners dealing with royalty payment problems and disputes.",
-      memberCount: 1123,
-      postCount: 789,
-      category: "Support",
-      avatar: "/placeholder.svg?height=80&width=80",
-      coverImage: "/placeholder.svg?height=200&width=400",
-      moderators: ["RoyaltyExpert", "PaymentPro"],
-      isActive: true,
-      lastActivity: "4 hours ago",
-      weeklyPosts: 25,
-      tags: ["royalty", "payments"],
-      featured: false,
-    },
-    {
-      id: 6,
-      name: "Oil & Gas Market Analysis",
-      description: "Professional analysis and discussion of oil and gas market trends, pricing, and forecasts.",
-      memberCount: 756,
-      postCount: 445,
-      category: "Professional",
-      avatar: "/placeholder.svg?height=80&width=80",
-      coverImage: "/placeholder.svg?height=200&width=400",
-      moderators: ["MarketAnalyst", "EnergyExpert"],
-      isActive: true,
-      lastActivity: "6 hours ago",
-      weeklyPosts: 22,
-      tags: ["market-analysis", "oil-prices"],
-      featured: true,
-    },
-    {
-      id: 7,
-      name: "New Landowner Support",
-      description: "A welcoming community for new mineral rights owners to ask questions and get guidance.",
-      memberCount: 445,
-      postCount: 234,
-      category: "Support",
-      avatar: "/placeholder.svg?height=80&width=80",
-      coverImage: "/placeholder.svg?height=200&width=400",
-      moderators: ["MentorPro", "NewbieFriend"],
-      isActive: true,
-      lastActivity: "8 hours ago",
-      weeklyPosts: 15,
-      tags: ["beginners", "support", "guidance"],
-      featured: false,
-    },
-    {
-      id: 8,
-      name: "Oklahoma Mineral Rights",
-      description: "Community for mineral rights owners and industry professionals in Oklahoma.",
-      memberCount: 567,
-      postCount: 334,
-      category: "Regional",
-      avatar: "/placeholder.svg?height=80&width=80",
-      coverImage: "/placeholder.svg?height=200&width=400",
-      moderators: ["OklahomaExpert"],
-      isActive: true,
-      lastActivity: "12 hours ago",
-      weeklyPosts: 12,
-      tags: ["oklahoma", "mineral-rights"],
-      featured: false,
-    },
-  ])
+  // const [publicGroups, setPublicGroups] = useState([
+  //   {
+  //     id: 1,
+  //     name: "Texas Mineral Rights Owners",
+  //     description: "A community for mineral rights owners in Texas to share experiences and advice.",
+  //     memberCount: 2847,
+  //     postCount: 1234,
+  //     category: "Regional",
+  //     avatar: "/placeholder.svg?height=80&width=80",
+  //     coverImage: "/placeholder.svg?height=200&width=400",
+  //     moderators: ["GeologyExpertTX", "TexasLandman"],
+  //     isActive: true,
+  //     lastActivity: "2 hours ago",
+  //     weeklyPosts: 45,
+  //     tags: ["texas", "mineral-rights", "landowners"],
+  //     featured: true,
+  //   },
+  //   {
+  //     id: 2,
+  //     name: "Permian Basin Landowners",
+  //     description:
+  //       "Dedicated to landowners in the Permian Basin region. Share drilling updates, lease negotiations, and market insights.",
+  //     memberCount: 1456,
+  //     postCount: 892,
+  //     category: "Regional",
+  //     avatar: "/placeholder.svg?height=80&width=80",
+  //     coverImage: "/placeholder.svg?height=200&width=400",
+  //     moderators: ["PermianExpert", "DrillingSupervisor"],
+  //     isActive: true,
+  //     lastActivity: "1 hour ago",
+  //     weeklyPosts: 32,
+  //     tags: ["permian-basin", "drilling"],
+  //     featured: false,
+  //   },
+  //   {
+  //     id: 3,
+  //     name: "Lease Negotiation Experts",
+  //     description: "Professional group for sharing lease negotiation strategies, legal advice, and best practices.",
+  //     memberCount: 892,
+  //     postCount: 567,
+  //     category: "Professional",
+  //     avatar: "/placeholder.svg?height=80&width=80",
+  //     coverImage: "/placeholder.svg?height=200&width=400",
+  //     moderators: ["LegalEagle", "ContractPro"],
+  //     isActive: true,
+  //     lastActivity: "3 hours ago",
+  //     weeklyPosts: 28,
+  //     tags: ["legal", "negotiation", "contracts"],
+  //     featured: true,
+  //   },
+  //   {
+  //     id: 4,
+  //     name: "Eagle Ford Shale Community",
+  //     description: "Connect with other landowners and industry professionals in the Eagle Ford Shale region.",
+  //     memberCount: 634,
+  //     postCount: 423,
+  //     category: "Regional",
+  //     avatar: "/placeholder.svg?height=80&width=80",
+  //     coverImage: "/placeholder.svg?height=200&width=400",
+  //     moderators: ["EagleFordExpert"],
+  //     isActive: true,
+  //     lastActivity: "5 hours ago",
+  //     weeklyPosts: 18,
+  //     tags: ["eagle-ford", "shale"],
+  //     featured: false,
+  //   },
+  //   {
+  //     id: 5,
+  //     name: "Royalty Payment Support",
+  //     description: "Support group for landowners dealing with royalty payment problems and disputes.",
+  //     memberCount: 1123,
+  //     postCount: 789,
+  //     category: "Support",
+  //     avatar: "/placeholder.svg?height=80&width=80",
+  //     coverImage: "/placeholder.svg?height=200&width=400",
+  //     moderators: ["RoyaltyExpert", "PaymentPro"],
+  //     isActive: true,
+  //     lastActivity: "4 hours ago",
+  //     weeklyPosts: 25,
+  //     tags: ["royalty", "payments"],
+  //     featured: false,
+  //   },
+  //   {
+  //     id: 6,
+  //     name: "Oil & Gas Market Analysis",
+  //     description: "Professional analysis and discussion of oil and gas market trends, pricing, and forecasts.",
+  //     memberCount: 756,
+  //     postCount: 445,
+  //     category: "Professional",
+  //     avatar: "/placeholder.svg?height=80&width=80",
+  //     coverImage: "/placeholder.svg?height=200&width=400",
+  //     moderators: ["MarketAnalyst", "EnergyExpert"],
+  //     isActive: true,
+  //     lastActivity: "6 hours ago",
+  //     weeklyPosts: 22,
+  //     tags: ["market-analysis", "oil-prices"],
+  //     featured: true,
+  //   },
+  //   {
+  //     id: 7,
+  //     name: "New Landowner Support",
+  //     description: "A welcoming community for new mineral rights owners to ask questions and get guidance.",
+  //     memberCount: 445,
+  //     postCount: 234,
+  //     category: "Support",
+  //     avatar: "/placeholder.svg?height=80&width=80",
+  //     coverImage: "/placeholder.svg?height=200&width=400",
+  //     moderators: ["MentorPro", "NewbieFriend"],
+  //     isActive: true,
+  //     lastActivity: "8 hours ago",
+  //     weeklyPosts: 15,
+  //     tags: ["beginners", "support", "guidance"],
+  //     featured: false,
+  //   },
+  //   {
+  //     id: 8,
+  //     name: "Oklahoma Mineral Rights",
+  //     description: "Community for mineral rights owners and industry professionals in Oklahoma.",
+  //     memberCount: 567,
+  //     postCount: 334,
+  //     category: "Regional",
+  //     avatar: "/placeholder.svg?height=80&width=80",
+  //     coverImage: "/placeholder.svg?height=200&width=400",
+  //     moderators: ["OklahomaExpert"],
+  //     isActive: true,
+  //     lastActivity: "12 hours ago",
+  //     weeklyPosts: 12,
+  //     tags: ["oklahoma", "mineral-rights"],
+  //     featured: false,
+  //   },
+  // ])
+  const [publicGroups, setPublicGroups] = useState<PublicGroupInterface[]>([])
+
+ useEffect(() => {
+    async function fetchGroups() {
+      setLoading(true) // Start loading
+      const response = await getPublicGroups()
+      console.log("API Response:", response)
+      if (Array.isArray(response)) {
+        setPublicGroups(response)
+      } else {
+        console.error("Invalid response format:", response)
+        toast({
+          title: "Error",
+          description: "Failed to load public groups. Please try again later.",
+          variant: "destructive",
+        })
+      } 
+       setLoading(false) // Stop loading
+    }
+    fetchGroups() 
+  }, [])
+  
 
   const handleJoinGroup = (groupId: number) => {
     const newJoinedGroups = new Set(joinedGroups)
@@ -233,8 +261,8 @@ export default function PublicGroupsPage() {
   const filteredGroups = publicGroups
 
   const sortedGroups = filteredGroups.sort((a, b) => {
-    const aIsJoined = joinedGroups.has(a.id)
-    const bIsJoined = joinedGroups.has(b.id)
+    const aIsJoined = joinedGroups.has(a.grpId)
+    const bIsJoined = joinedGroups.has(b.grpId)
 
     // If one is joined and the other isn't, prioritize the joined one
     if (aIsJoined && !bIsJoined) return -1
@@ -244,8 +272,8 @@ export default function PublicGroupsPage() {
     return 0
   })
 
-  const featuredGroups = publicGroups.filter((group) => group.featured)
-  const trendingGroups = [...publicGroups].sort((a, b) => b.weeklyPosts - a.weeklyPosts).slice(0, 4)
+  // const featuredGroups = publicGroups.filter((group) => group.featured)
+  // const trendingGroups = [...publicGroups].sort((a, b) => b.weeklyPosts - a.weeklyPosts).slice(0, 4)
 
   const getCategoryIcon = (category: string) => {
     switch (category) {
@@ -276,7 +304,41 @@ export default function PublicGroupsPage() {
   const handleCardClick = (groupId: number) => {
     window.location.href = `/groups/${groupId}`
   }
+// Converts ISO date string to "X weeks/months/years ago"
+function getTimeAgo(dateString: string): string {
+  const now = new Date();
+  const created = new Date(dateString);
+  const diffMs = now.getTime() - created.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
+  if (diffDays < 7) {
+    return `${diffDays} day${diffDays !== 1 ? "s" : ""} ago`;
+  }
+  const diffWeeks = Math.floor(diffDays / 7);
+  if (diffWeeks < 4) {
+    return `${diffWeeks} week${diffWeeks !== 1 ? "s" : ""} ago`;
+  }
+  const diffMonths = Math.floor(diffDays / 30);
+  if (diffMonths < 12) {
+    return `${diffMonths} month${diffMonths !== 1 ? "s" : ""} ago`;
+  }
+  const diffYears = Math.floor(diffDays / 365);
+  return `${diffYears} year${diffYears !== 1 ? "s" : ""} ago`;
+}
+  // Skeleton card component
+  const GroupCardSkeleton = () => (
+    <Card className="overflow-hidden">
+      <Skeleton className="h-32 w-full" />
+      <div className="p-4">
+        <Skeleton className="h-6 w-2/3 mb-2" />
+        <Skeleton className="h-4 w-1/2 mb-4" />
+        <div className="flex gap-2">
+          <Skeleton className="h-8 w-20" />
+          <Skeleton className="h-8 w-20" />
+        </div>
+      </div>
+    </Card>
+  )
   return (
     <AppLayout pageTitle="Public Groups" searchPlaceholder="Search public groups...">
       <div className="p-4 lg:p-6">
@@ -289,7 +351,7 @@ export default function PublicGroupsPage() {
 
           {/* Tabs */}
           <Tabs defaultValue="all" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 h-12">
+            {/* <TabsList className="grid w-full grid-cols-3 h-12">
               <TabsTrigger value="all" className="text-sm lg:text-base font-bold flex items-center gap-2">
                 <Users className="h-4 w-4 lg:h-5 lg:w-5 text-blue-500" />
                 All Groups ({sortedGroups.length})
@@ -302,20 +364,34 @@ export default function PublicGroupsPage() {
                 <TrendingUp className="h-4 w-4 lg:h-5 lg:w-5 text-orange-500" />
                 Trending
               </TabsTrigger>
-            </TabsList>
+            </TabsList> */}
 
             {/* All Groups Tab */}
             <TabsContent value="all" className="mt-6">
+           {/* <div  className={
+    loading
+      ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 opacity-50"
+      : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+  }>
+      {loading
+  ? Array.from({ length: 6 }).map((_, idx) => <GroupCardSkeleton key={idx} />)
+  : sortedGroups.map((group) => (
+      <Card key={group.grpId}>
+      
+      </Card>
+    ))
+}
+    </div> */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {sortedGroups.map((group) => {
-                  const CategoryIcon = getCategoryIcon(group.category)
-                  const isJoined = joinedGroups.has(group.id)
+                  // const CategoryIcon = getCategoryIcon(group.category)
+                  const isJoined = joinedGroups.has(group.grpId)
 
                   return (
                     <Card
-                      key={group.id}
+                      key={group.grpId}
                       className="hover:shadow-lg transition-shadow group overflow-hidden cursor-pointer"
-                      onClick={() => handleCardClick(group.id)}
+                      onClick={() => handleCardClick(group.grpId)}
                     >
                       <CardContent className="p-0">
                         {/* Group Cover Image */}
@@ -323,8 +399,8 @@ export default function PublicGroupsPage() {
                           <div className="absolute inset-0 flex items-center justify-center">
                             <div className="w-full h-full relative">
                               <Image
-                                src={group.coverImage || "/placeholder.svg"}
-                                alt={group.name}
+                                src={group.img1 || "/placeholder.svg"}
+                                alt={group.grpName}
                                 fill
                                 className="object-cover group-hover:scale-105 transition-transform duration-300"
                                 priority
@@ -334,22 +410,22 @@ export default function PublicGroupsPage() {
                           </div>
                           <div className="absolute inset-0 bg-black/20"></div>
                           <div className="absolute top-3 right-3 flex gap-2">
-                            {group.featured && (
+                            {/* {group.featured && (
                               <Badge variant="secondary" className="bg-yellow-500/90 text-white border-0">
                                 <Star className="h-3 w-3 mr-1" fill="currentColor" />
                                 Featured
                               </Badge>
-                            )}
-                            <Badge variant="secondary" className={`border-0 ${getCategoryColor(group.category)}`}>
+                            )} */}
+                            {/* <Badge variant="secondary" className={`border-0 ${getCategoryColor(group.category)}`}>
                               <CategoryIcon className="h-3 w-3 mr-1" />
                               {group.category}
-                            </Badge>
+                            </Badge> */}
                           </div>
                           <div className="absolute bottom-3 left-3">
                             <Avatar className="h-12 w-12 border-2 border-white">
-                              <AvatarImage src={group.avatar || "/placeholder.svg"} alt={group.name[0]} />
+                              <AvatarImage src={group.img1 || "/placeholder.svg"} alt={group.grpName[0]} />
                               <AvatarFallback className="bg-purple-600 text-white font-bold">
-                                {group.name[0]}
+                                {group.grpName[0]}
                               </AvatarFallback>
                             </Avatar>
                           </div>
@@ -358,8 +434,8 @@ export default function PublicGroupsPage() {
                         {/* Group Content */}
                         <div className="p-4">
                           <div className="mb-3">
-                            <h3 className="font-semibold text-lg text-gray-900 break-words mb-1">{group.name}</h3>
-                            <p className="text-sm text-gray-600 break-words line-clamp-2">{group.description}</p>
+                            <h3 className="font-semibold text-lg text-gray-900 break-words mb-1">{group.grpName}</h3>
+                            <p className="text-sm text-gray-600 break-words line-clamp-2">{group.grpDesc}</p>
                           </div>
 
                           {/* Stats */}
@@ -370,19 +446,19 @@ export default function PublicGroupsPage() {
                             </div>
                             <div className="flex items-center gap-1">
                               <MessageSquare className="h-3 w-3" />
-                              <span>{group.postCount}</span>
+                              <span>{group.noOfPostsCount}</span>
                             </div>
                             <div className="flex items-center gap-1">
                               <Zap className="h-3 w-3" />
-                              <span>{group.weeklyPosts}/week</span>
+                              <span>{getTimeAgo(group.createTs)}</span>
                             </div>
                           </div>
 
                           {/* Tags */}
                           <div className="flex flex-wrap gap-1 mb-3">
-                            {group.tags.slice(0, 3).map((tag) => (
+                            {group.hashtags.slice(0, 3).map((tag) => (
                               <Badge key={tag} variant="outline" className="text-xs">
-                                #{tag}
+                                {tag}
                               </Badge>
                             ))}
                           </div>
@@ -394,7 +470,7 @@ export default function PublicGroupsPage() {
                               className="flex-1 text-sm"
                               onClick={(e) => {
                                 e.stopPropagation()
-                                window.location.href = `/groups/${group.id}`
+                                window.location.href = `/groups/${group.grpId}`
                               }}
                             >
                               <Eye className="h-4 w-4 mr-2" />
@@ -437,10 +513,10 @@ export default function PublicGroupsPage() {
                           </Button> */}
 
                           {/* Last Activity */}
-                          <div className="flex items-center gap-1 text-xs text-gray-400 mt-2">
+                          {/* <div className="flex items-center gap-1 text-xs text-gray-400 mt-2">
                             <Clock className="h-3 w-3" />
                             <span>Active {group.lastActivity}</span>
-                          </div>
+                          </div> */}
                         </div>
                       </CardContent>
                     </Card>
@@ -463,248 +539,7 @@ export default function PublicGroupsPage() {
               )}
             </TabsContent>
 
-            {/* Featured Groups Tab */}
-            <TabsContent value="featured" className="mt-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {featuredGroups.map((group) => {
-                  const CategoryIcon = getCategoryIcon(group.category)
-                  const isJoined = joinedGroups.has(group.id)
-
-                  return (
-                    <Card
-                      key={group.id}
-                      className="hover:shadow-lg transition-shadow group overflow-hidden border-yellow-200 cursor-pointer"
-                      onClick={() => handleCardClick(group.id)}
-                    >
-                      <CardContent className="p-0">
-                        {/* Group Cover Image */}
-                        <div className="relative h-32 bg-gradient-to-br from-yellow-400 to-orange-500 overflow-hidden">
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="w-full h-full relative">
-                              <Image
-                                src={group.coverImage || "/placeholder.svg"}
-                                alt={group.name}
-                                fill
-                                className="object-cover group-hover:scale-105 transition-transform duration-300"
-                                priority
-                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                              />
-                            </div>
-                          </div>
-                          <div className="absolute inset-0 bg-black/20"></div>
-                          <div className="absolute top-3 right-3">
-                            <Badge variant="secondary" className="bg-yellow-500/90 text-white border-0">
-                              <Star className="h-3 w-3 mr-1" fill="currentColor" />
-                              Featured
-                            </Badge>
-                          </div>
-                          <div className="absolute bottom-3 left-3">
-                            <Avatar className="h-12 w-12 border-2 border-white">
-                              <AvatarImage src={group.avatar || "/placeholder.svg"} alt={group.name[0]} />
-                              <AvatarFallback className="bg-purple-600 text-white font-bold">
-                                {group.name[0]}
-                              </AvatarFallback>
-                            </Avatar>
-                          </div>
-                        </div>
-
-                        {/* Group Content */}
-                        <div className="p-4">
-                          <div className="mb-3">
-                            <h3 className="font-semibold text-lg text-gray-900 break-words mb-1">{group.name}</h3>
-                            <p className="text-sm text-gray-600 break-words line-clamp-2">{group.description}</p>
-                          </div>
-
-                          {/* Stats */}
-                          <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
-                            <div className="flex items-center gap-1">
-                              <Users className="h-3 w-3" />
-                              <span>{group.memberCount.toLocaleString()}</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <MessageSquare className="h-3 w-3" />
-                              <span>{group.postCount}</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Zap className="h-3 w-3" />
-                              <span>{group.weeklyPosts}/week</span>
-                            </div>
-                          </div>
-
-                          {/* Action Buttons */}
-                          <div className="flex gap-2">
-                            <Button
-                              variant="outline"
-                              className="flex-1 text-sm"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                window.location.href = `/groups/${group.id}`
-                              }}
-                            >
-                              <Eye className="h-4 w-4 mr-2" />
-                              View
-                            </Button>
-                            {/* <Button
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                handleJoinGroup(group.id)
-                              }}
-                              className={`flex-1 text-sm ${
-                                isJoined ? "bg-green-600 hover:bg-green-700" : "bg-blue-600 hover:bg-blue-700"
-                              }`}
-                            >
-                              {isJoined ? (
-                                <>
-                                  <Shield className="h-4 w-4 mr-2" />
-                                  Joined
-                                </>
-                              ) : (
-                                <>
-                                  <UserPlus className="h-4 w-4 mr-2" />
-                                  Join
-                                </>
-                              )}
-                            </Button> */}
-                          </div>
-
-                          {/* Send Invitation Button */}
-                          {/* <Button
-                            variant="ghost"
-                            className="w-full mt-2 text-sm text-blue-600 hover:bg-blue-50"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleOpenInviteDialog(group)
-                            }}
-                          >
-                            <Mail className="h-4 w-4 mr-2" />
-                            Send Invitation
-                          </Button> */}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )
-                })}
-              </div>
-            </TabsContent>
-
-            {/* Trending Groups Tab */}
-            <TabsContent value="trending" className="mt-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {trendingGroups.map((group, index) => {
-                  const CategoryIcon = getCategoryIcon(group.category)
-                  const isJoined = joinedGroups.has(group.id)
-
-                  return (
-                    <Card
-                      key={group.id}
-                      className="hover:shadow-lg transition-shadow group overflow-hidden border-orange-200 cursor-pointer"
-                      onClick={() => handleCardClick(group.id)}
-                    >
-                      <CardContent className="p-0">
-                        {/* Group Cover Image */}
-                        <div className="relative h-32 bg-gradient-to-br from-orange-400 to-red-500 overflow-hidden">
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="w-full h-full relative">
-                              <Image
-                                src={group.coverImage || "/placeholder.svg"}
-                                alt={group.name}
-                                fill
-                                className="object-cover group-hover:scale-105 transition-transform duration-300"
-                                priority
-                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                              />
-                            </div>
-                          </div>
-                          <div className="absolute inset-0 bg-black/20"></div>
-                          <div className="absolute top-3 right-3">
-                            <Badge variant="secondary" className="bg-orange-500/90 text-white border-0">
-                              <TrendingUp className="h-3 w-3 mr-1" />#{index + 1} Trending
-                            </Badge>
-                          </div>
-                          <div className="absolute bottom-3 left-3">
-                            <Avatar className="h-12 w-12 border-2 border-white">
-                              <AvatarImage src={group.avatar || "/placeholder.svg"} alt={group.name[0]} />
-                              <AvatarFallback className="bg-purple-600 text-white font-bold">
-                                {group.name[0]}
-                              </AvatarFallback>
-                            </Avatar>
-                          </div>
-                        </div>
-
-                        {/* Group Content */}
-                        <div className="p-4">
-                          <div className="mb-3">
-                            <h3 className="font-semibold text-lg text-gray-900 break-words mb-1">{group.name}</h3>
-                            <p className="text-sm text-gray-600 break-words line-clamp-2">{group.description}</p>
-                          </div>
-
-                          {/* Trending Stats */}
-                          <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
-                            <div className="flex items-center gap-1">
-                              <Users className="h-3 w-3" />
-                              <span>{group.memberCount.toLocaleString()}</span>
-                            </div>
-                            <div className="flex items-center gap-1 text-orange-600 font-medium">
-                              <Zap className="h-3 w-3" />
-                              <span>{group.weeklyPosts} posts this week</span>
-                            </div>
-                          </div>
-
-                          {/* Action Buttons */}
-                          <div className="flex gap-2">
-                            <Button
-                              variant="outline"
-                              className="flex-1 text-sm"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                window.location.href = `/groups/${group.id}`
-                              }}
-                            >
-                              <Eye className="h-4 w-4 mr-2" />
-                              View
-                            </Button>
-                            {/* <Button
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                handleJoinGroup(group.id)
-                              }}
-                              className={`flex-1 text-sm ${
-                                isJoined ? "bg-green-600 hover:bg-green-700" : "bg-blue-600 hover:bg-blue-700"
-                              }`}
-                            >
-                              {isJoined ? (
-                                <>
-                                  <Shield className="h-4 w-4 mr-2" />
-                                  Joined
-                                </>
-                              ) : (
-                                <>
-                                  <UserPlus className="h-4 w-4 mr-2" />
-                                  Join
-                                </>
-                              )}
-                            </Button> */}
-                          </div>
-
-                          {/* Send Invitation Button */}
-                          {/* <Button
-                            variant="ghost"
-                            className="w-full mt-2 text-sm text-blue-600 hover:bg-blue-50"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleOpenInviteDialog(group)
-                            }}
-                          >
-                            <Mail className="h-4 w-4 mr-2" />
-                            Send Invitation
-                          </Button> */}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )
-                })}
-              </div>
-            </TabsContent>
+          
           </Tabs>
         </div>
       </div>

@@ -26,6 +26,10 @@ import { usePathname } from "next/navigation"
 import { useState } from "react"
 import { useToast } from "@/components/ui/use-toast"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { Bold, Italic, Underline, List, ListOrdered, Link2 } from "lucide-react"
+import { addQuestion } from "@/services/service"
+import { useAuthAction } from "@/hooks/use-auth-action"
+import { LoginPopup } from "./login-popup"
 
 interface SidebarProps {
   className?: string
@@ -56,6 +60,9 @@ export function Sidebar({ className }: SidebarProps) {
 
   const [showAutocomplete, setShowAutocomplete] = useState(false)
   const [autocompleteSuggestions, setAutocompleteSuggestions] = useState<any[]>([])
+   const [editorContent, setEditorContent] = useState("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const { executeWithAuth, loginPopupState, closeLoginPopup, handleLoginSuccess } = useAuthAction()
 
   // Sample existing posts data
   const existingPosts = [
@@ -229,28 +236,72 @@ export function Sidebar({ className }: SidebarProps) {
     window.location.href = post.url
   }
 
-  const handleSubmitQuestion = () => {
-    console.log("Submitting question:", questionData)
+  const handleSubmitQuestion = async () => {
+    setIsSubmitting(true)
 
-    setQuestionData({
-      title: "",
-      content: "",
-      category: "",
-      tags: [],
-      currentTag: "",
-    })
-    setShowAutocomplete(false)
-    setAutocompleteSuggestions([])
-    setShowAllCategories(false)
-    setAskQuestionOpen(false)
+    try {
+     const payload = {
+      postType: "question",
+      uId: 6, // Replace with actual user ID from context
+      uname: "John Doe", // Replace with actual username from context
+      title: questionData.title,
+      content: editorContent,
+      grpId: 45, // Replace with actual group ID
+      grpName: questionData.category || "Discussion",
+    }
 
-    toast({
-      title: "Question posted",
-      description: "Your question has been posted successfully.",
-    })
+      const response = await addQuestion(payload) 
+ console.log("Question submitted successfully:", response)
+      if (response) {
+        // console.log("Question submitted successfully:", payload)
+
+        setQuestionData({
+          title: "",
+          content: "",
+          category: "",
+          tags: [],
+          currentTag: "",
+        })
+        setEditorContent("")
+        setShowAutocomplete(false)
+        setAutocompleteSuggestions([])
+        setShowAllCategories(false)
+        setAskQuestionOpen(false)
+
+         toast({
+          title: "Question posted",
+          description: "Your question has been posted successfully.",
+        })
+      } else {
+        throw new Error("Failed to submit question")
+      }
+    } catch (error) {
+      console.error("Error submitting question:", error)
+      toast({
+        title: "Error",
+        description: "Failed to post your question. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
-  const isFormValid = questionData.title.trim() && questionData.content.trim() && questionData.category
+
+   const formatText = (command: string, value?: string) => {
+    document.execCommand(command, false, value)
+    const editor = document.getElementById("rich-editor")
+    if (editor) {
+      setEditorContent(editor.innerHTML)
+    }
+  }
+
+  const handleEditorChange = (e: React.FormEvent<HTMLDivElement>) => {
+    const content = e.currentTarget.innerHTML
+    setEditorContent(content)
+  }
+
+  const isFormValid = questionData.title.trim() && editorContent.trim() && questionData.category
 
   const handleDialogClose = () => {
     setQuestionData({
@@ -260,6 +311,11 @@ export function Sidebar({ className }: SidebarProps) {
       tags: [],
       currentTag: "",
     })
+    setEditorContent("")
+    const editor = document.getElementById("rich-editor")
+    if (editor) {
+      editor.innerHTML = ""
+    }
     setShowAutocomplete(false)
     setAutocompleteSuggestions([])
     setShowAllCategories(false)
@@ -355,20 +411,31 @@ export function Sidebar({ className }: SidebarProps) {
       </nav>
 
       {/* Ask Question Button */}
-      <div className="p-4">
-        <Dialog
-          open={askQuestionOpen}
-          onOpenChange={(open) => {
-            if (!open) handleDialogClose()
-            else setAskQuestionOpen(open)
-          }}
+      {/* <div className="p-4"> */}
+       <div className="p-4">
+        <Button
+          onClick={() => executeWithAuth(() => setAskQuestionOpen(true), "ask a question")}
+          className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold"
         >
-          <DialogTrigger asChild>
-            <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold">
+          <Plus className="h-5 w-5 mr-2" fill="currentColor" />
+          Ask a Question
+        </Button>
+      </div>
+
+      {/* Ask Question Dialog */}
+      <Dialog
+        open={askQuestionOpen}
+        onOpenChange={(open) => {
+          if (!open) handleDialogClose()
+          else setAskQuestionOpen(open)
+        }}
+      >
+          {/* <DialogTrigger asChild>
+            <Button onClick={() => executeWithAuth(() => setAskQuestionOpen(true), "ask a question")} className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold">
               <Plus className="h-5 w-5 mr-2" fill="currentColor" />
               Ask a Question
             </Button>
-          </DialogTrigger>
+          </DialogTrigger> */}
           <DialogContent className="max-w-5xl w-[100vw] sm:w-[100vw] lg:w-[1000px] max-h-[95vh] overflow-hidden pt-2 gap-0">
             <DialogHeader className="flex flex-row items-center gap-x-2 pb-0">
               <DialogTitle className="text-lg font-semibold">Ask a Question</DialogTitle>
@@ -433,19 +500,96 @@ export function Sidebar({ className }: SidebarProps) {
                   </div>
 
                   {/* Question Content */}
-                  <div className="space-y-2">
+                   <div className="space-y-2">
                     <Label htmlFor="question-content" className="text-sm lg:text-base">
                       Question Details *
                     </Label>
-                    <Textarea
-                      id="question-content"
-                      placeholder="Provide more details about your question. Include relevant background information, what you've tried, and what specific help you need..."
-                      value={questionData.content}
-                      onChange={(e) => setQuestionData({ ...questionData, content: e.target.value })}
-                      className="min-h-[100px] lg:min-h-[120px] text-sm lg:text-base resize-none"
+
+                    {/* Rich Text Editor Toolbar */}
+                    <div className="border border-gray-300 rounded-t-lg bg-gray-50 p-2 flex gap-1 flex-wrap">
+                      <button
+                        type="button"
+                        onClick={() => formatText("bold")}
+                        className="p-2 hover:bg-gray-200 rounded transition-colors"
+                        title="Bold"
+                      >
+                        <Bold className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => formatText("italic")}
+                        className="p-2 hover:bg-gray-200 rounded transition-colors"
+                        title="Italic"
+                      >
+                        <Italic className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => formatText("underline")}
+                        className="p-2 hover:bg-gray-200 rounded transition-colors"
+                        title="Underline"
+                      >
+                        <Underline className="h-4 w-4" />
+                      </button>
+                      <div className="w-px bg-gray-300 mx-1"></div>
+                      <button
+                        type="button"
+                        onClick={() => formatText("insertUnorderedList")}
+                        className="p-2 hover:bg-gray-200 rounded transition-colors"
+                        title="Bullet List"
+                      >
+                        <List className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => formatText("insertOrderedList")}
+                        className="p-2 hover:bg-gray-200 rounded transition-colors"
+                        title="Numbered List"
+                      >
+                        <ListOrdered className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const url = prompt("Enter URL:")
+                          if (url) formatText("createLink", url)
+                        }}
+                        className="p-2 hover:bg-gray-200 rounded transition-colors"
+                        title="Insert Link"
+                      >
+                        <Link2 className="h-4 w-4" />
+                      </button>
+                    </div>
+
+                    {/* Rich Text Editor */}
+                    <div
+                      id="rich-editor"
+                      contentEditable
+                      onInput={handleEditorChange}
+                      className="min-h-[120px] lg:min-h-[140px] p-3 border border-t-0 border-gray-300 rounded-b-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm lg:text-base"
+                      style={{
+                        maxHeight: "200px",
+                        overflowY: "auto",
+                        lineHeight: "1.5",
+                      }}
+                      data-placeholder="Provide more details about your question. Include relevant background information, what you've tried, and what specific help you need..."
+                      suppressContentEditableWarning={true}
                     />
+
+                    <style jsx>{`
+                      #rich-editor:empty:before {
+                        content: attr(data-placeholder);
+                        color: #9CA3AF;
+                        pointer-events: none;
+                      }
+                      #rich-editor:focus:before {
+                        display: none;
+                      }
+                    `}</style>
+
                     <p className="text-xs lg:text-sm text-gray-500">
-                      The more details you provide, the better answers you'll receive
+                      Use the toolbar above to format your text. The more details you provide, the better answers you'll
+                      receive.
                     </p>
                   </div>
 
@@ -579,7 +723,7 @@ export function Sidebar({ className }: SidebarProps) {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </div>
+      {/* </div> */}
 
       {/* Create Group Dialog */}
       <Dialog open={createGroupOpen} onOpenChange={setCreateGroupOpen}>
@@ -664,6 +808,13 @@ export function Sidebar({ className }: SidebarProps) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+        {/* Login Popup */}
+      <LoginPopup
+        isOpen={loginPopupState.isOpen}
+        onClose={closeLoginPopup}
+        actionMessage={loginPopupState.actionMessage}
+        onLoginSuccess={handleLoginSuccess}
+      />
     </div>
   )
 }

@@ -15,6 +15,7 @@ import { Search, Bell, User, Settings, LogOut, Menu, ArrowLeft } from "lucide-re
 import Link from "next/link"
 import { useState, type ReactNode } from "react"
 import { Sidebar } from "./sidebar"
+import { useAuth } from "@/hooks/use-auth"
 
 interface AppLayoutProps {
   children: ReactNode
@@ -24,6 +25,7 @@ interface AppLayoutProps {
 
 export function AppLayout({ children, pageTitle, searchPlaceholder = "Search..." }: AppLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const { user, isLoggedIn, logout } = useAuth()
 
   return (
     <div className="flex h-screen bg-gray-50 font-montserrat">
@@ -84,8 +86,7 @@ export function AppLayout({ children, pageTitle, searchPlaceholder = "Search..."
             <Link href="/notifications">
               <Button
                 variant="ghost"
-                className="h-10 w-10 lg:h-12 lg:w-12 p-2 text-yellow-400 hover:bg-slate-500 hover:text-yellow-300 transition-all duration-200 hover:scale-110 relative"
-              >
+                 className="h-10 w-10 lg:h-12 lg:w-12 p-2 text-yellow-400 hover:bg-slate-500 hover:text-yellow-300 transition-all duration-200 hover:scale-110 relative"  >
                 <Bell
                   className="h-8 w-8 lg:h-12 lg:w-12 transition-transform duration-200 hover:animate-pulse"
                   fill="currentColor"
@@ -102,34 +103,48 @@ export function AppLayout({ children, pageTitle, searchPlaceholder = "Search..."
               <DropdownMenuTrigger asChild>
                 <div className="flex items-center gap-2 cursor-pointer hover:bg-slate-500 rounded-lg px-2 py-1 transition-colors">
                   <Avatar className="h-8 w-8 lg:h-10 lg:w-10">
-                    <AvatarImage src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face" />
+                    <AvatarImage
+                      src={
+                        user?.avatar ||
+                        "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face"
+                      }
+                    />
                     <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-semibold">
-                      JD
+                      {user?.name?.[0] || "U"}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="text-sm font-medium text-white hidden sm:block">Profile</span>
+                  <span className="text-sm font-medium text-white hidden sm:block">
+                    {isLoggedIn ? user?.name || "Profile" : "Guest"}
+                  </span>
                 </div>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem className="cursor-pointer" asChild>
-                  <Link href="/profile">
-                    <User className="mr-2 h-4 w-4 text-blue-500" fill="currentColor" />
-                    <span>My Profile</span>
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer" asChild>
-                  <Link href="/notifications?tab=settings">
-                    <Settings className="mr-2 h-4 w-4 text-gray-600" fill="currentColor" />
-                    <span>Settings</span>
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="cursor-pointer text-red-600" asChild>
-                  <Link href="/logout">
-                    <LogOut className="mr-2 h-4 w-4 text-red-600" />
-                    <span>Log out</span>
-                  </Link>
-                </DropdownMenuItem>
+                {isLoggedIn ? (
+                  <>
+                    <DropdownMenuItem className="cursor-pointer" asChild>
+                      <Link href="/profile">
+                        <User className="mr-2 h-4 w-4 text-blue-500" fill="currentColor" />
+                        <span>My Profile</span>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="cursor-pointer" asChild>
+                      <Link href="/notifications?tab=settings">
+                        <Settings className="mr-2 h-4 w-4 text-gray-600" fill="currentColor" />
+                        <span>Settings</span>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="cursor-pointer text-red-600" onClick={logout}>
+                      <LogOut className="mr-2 h-4 w-4 text-red-600" />
+                      <span>Log out</span>
+                    </DropdownMenuItem>
+                  </>
+                ) : (
+                  <DropdownMenuItem className="cursor-pointer text-blue-600">
+                    <User className="mr-2 h-4 w-4 text-blue-600" />
+                    <span>Please log in</span>
+                  </DropdownMenuItem>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

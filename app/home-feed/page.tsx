@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import {
@@ -28,6 +28,8 @@ import { useState } from "react"
 import { AppLayout } from "@/components/app-layout"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/components/ui/use-toast"
+import { useAuthAction } from "@/hooks/use-auth-action"
+import { LoginPopup } from "@/components/login-popup"
 
 export default function HomeFeedPage() {
   const router = useRouter()
@@ -36,6 +38,12 @@ export default function HomeFeedPage() {
   const [likedPosts, setLikedPosts] = useState<Set<number>>(new Set())
   const [postComments, setPostComments] = useState<{ [key: number]: string }>({})
   const [newComment, setNewComment] = useState("")
+  const [commentDialogState, setCommentDialogState] = useState({
+    isOpen: false,
+    postId: null as number | null,
+  })
+
+  const { executeWithAuth, loginPopupState, closeLoginPopup, handleLoginSuccess } = useAuthAction()
 
   // Sample connected members' posts data
   const [feedPosts, setFeedPosts] = useState([
@@ -200,49 +208,54 @@ export default function HomeFeedPage() {
   }
 
   const handleLike = (e: React.MouseEvent, postId: number) => {
-    e.stopPropagation() // Prevent navigation when clicking the like button
-    const newLikedPosts = new Set(likedPosts)
-    const post = feedPosts.find((p) => p.id === postId)
+    e.stopPropagation()
 
-    if (newLikedPosts.has(postId)) {
-      newLikedPosts.delete(postId)
-      if (post) {
-        post.engagement.likes -= 1
-      }
-    } else {
-      newLikedPosts.add(postId)
-      if (post) {
-        post.engagement.likes += 1
-      }
-    }
+    executeWithAuth(() => {
+      const newLikedPosts = new Set(likedPosts)
+      const post = feedPosts.find((p) => p.id === postId)
 
-    setLikedPosts(newLikedPosts)
-    setFeedPosts([...feedPosts])
+      if (newLikedPosts.has(postId)) {
+        newLikedPosts.delete(postId)
+        if (post) {
+          post.engagement.likes -= 1
+        }
+      } else {
+        newLikedPosts.add(postId)
+        if (post) {
+          post.engagement.likes += 1
+        }
+      }
+
+      setLikedPosts(newLikedPosts)
+      setFeedPosts([...feedPosts])
+    }, "like this post")
   }
 
   const handleComment = (postId: number) => {
-    if (!newComment.trim()) return
+    executeWithAuth(() => {
+      if (!newComment.trim()) return
 
-    const post = feedPosts.find((p) => p.id === postId)
-    if (post) {
-      const comment = {
-        id: post.comments.length + 1,
-        user: "John Doe", // Current user
-        avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face",
-        content: newComment,
-        time: "Just now",
+      const post = feedPosts.find((p) => p.id === postId)
+      if (post) {
+        const comment = {
+          id: post.comments.length + 1,
+          user: "John Doe",
+          avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face",
+          content: newComment,
+          time: "Just now",
+        }
+
+        post.comments.push(comment)
+        post.engagement.comments += 1
+        setFeedPosts([...feedPosts])
+        setNewComment("")
+
+        toast({
+          title: "Comment posted",
+          description: "Your comment has been posted successfully.",
+        })
       }
-
-      post.comments.push(comment)
-      post.engagement.comments += 1
-      setFeedPosts([...feedPosts])
-      setNewComment("")
-
-      toast({
-        title: "Comment posted",
-        description: "Your comment has been posted successfully.",
-      })
-    }
+    }, "comment on this post")
   }
 
   const handleShare = (e: React.MouseEvent, post: any, platform?: string) => {
@@ -288,7 +301,7 @@ export default function HomeFeedPage() {
                 className="hover:shadow-md transition-shadow cursor-pointer"
                 onClick={() => navigateToPost(post)}
               >
-                <CardContent className="p-4">
+                <CardContent className="p-6">
                   {/* Post Header */}
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-start gap-3 flex-1">
@@ -384,69 +397,21 @@ export default function HomeFeedPage() {
                       </button>
 
                       {/* Comment Button */}
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <button
-                            className="flex items-center gap-2 text-gray-500 hover:text-green-600 transition-colors"
-                            onClick={(e) => e.stopPropagation()} // Prevent navigation when opening dialog
-                          >
-                            <MessageSquare className="h-5 w-5" />
-                            <span className="text-sm font-medium">{post.engagement.comments}</span>
-                          </button>
-                        </DialogTrigger>
-                        <DialogContent
-                          className="max-w-2xl max-h-[80vh] overflow-y-auto"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <DialogHeader>
-                            <DialogTitle>Comments ({post.engagement.comments})</DialogTitle>
-                          </DialogHeader>
-                          <div className="space-y-4 mt-4">
-                            {/* Existing Comments */}
-                            {post.comments.map((comment) => (
-                              <div key={comment.id} className="flex items-start gap-3 p-3 border rounded-lg">
-                                <Avatar className="h-8 w-8 flex-shrink-0">
-                                  <AvatarImage src={comment.avatar || "/placeholder.svg"} />
-                                  <AvatarFallback>{comment.user[0]}</AvatarFallback>
-                                </Avatar>
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2 mb-1">
-                                    <span className="font-medium text-blue-600 break-words">{comment.user}</span>
-                                    <span className="text-xs text-gray-500">{comment.time}</span>
-                                  </div>
-                                  <p className="text-sm text-gray-700 break-words">{comment.content}</p>
-                                </div>
-                              </div>
-                            ))}
-
-                            {/* Add Comment */}
-                            <div className="flex items-start gap-3 p-3 border-2 border-dashed border-gray-200 rounded-lg">
-                              <Avatar className="h-8 w-8 flex-shrink-0">
-                                <AvatarImage src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face" />
-                                <AvatarFallback>JD</AvatarFallback>
-                              </Avatar>
-                              <div className="flex-1 space-y-2">
-                                <Textarea
-                                  placeholder="Write a comment..."
-                                  value={newComment}
-                                  onChange={(e) => setNewComment(e.target.value)}
-                                  className="min-h-[80px]"
-                                />
-                                <div className="flex justify-end">
-                                  <Button
-                                    onClick={() => handleComment(post.id)}
-                                    size="sm"
-                                    disabled={!newComment.trim()}
-                                  >
-                                    <Send className="h-4 w-4 mr-2" />
-                                    Post Comment
-                                  </Button>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
+                      <button
+                        className="flex items-center gap-2 text-gray-500 hover:text-green-600 transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          executeWithAuth(() => {
+                            setCommentDialogState({
+                              isOpen: true,
+                              postId: post.id,
+                            })
+                          }, "comment on this post")
+                        }}
+                      >
+                        <MessageSquare className="h-5 w-5" />
+                        <span className="text-sm font-medium">{post.engagement.comments}</span>
+                      </button>
 
                       {/* Share Button */}
                       <DropdownMenu>
@@ -489,6 +454,71 @@ export default function HomeFeedPage() {
             ))}
           </div>
 
+          {/* Comment Dialogs for all posts */}
+          {feedPosts.slice(0, visiblePosts).map(
+            (post) =>
+              commentDialogState.postId === post.id && (
+                <Dialog
+                  key={`comment-dialog-${post.id}`}
+                  open={commentDialogState.isOpen}
+                  onOpenChange={(open) => {
+                    if (!open) {
+                      setCommentDialogState({ isOpen: false, postId: null })
+                    }
+                  }}
+                >
+                  <DialogContent
+                    className="max-w-2xl max-h-[80vh] overflow-y-auto"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <DialogHeader>
+                      <DialogTitle>Comments ({post.engagement.comments})</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 mt-4">
+                      {/* Existing Comments */}
+                      {post.comments.map((comment) => (
+                        <div key={comment.id} className="flex items-start gap-3 p-3 border rounded-lg">
+                          <Avatar className="h-8 w-8 flex-shrink-0">
+                            <AvatarImage src={comment.avatar || "/placeholder.svg"} />
+                            <AvatarFallback>{comment.user[0]}</AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="font-medium text-blue-600 break-words">{comment.user}</span>
+                              <span className="text-xs text-gray-500">{comment.time}</span>
+                            </div>
+                            <p className="text-sm text-gray-700 break-words">{comment.content}</p>
+                          </div>
+                        </div>
+                      ))}
+
+                      {/* Add Comment */}
+                      <div className="flex items-start gap-3 p-3 border-2 border-dashed border-gray-200 rounded-lg">
+                        <Avatar className="h-8 w-8 flex-shrink-0">
+                          <AvatarImage src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face" />
+                          <AvatarFallback>JD</AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 space-y-2">
+                          <Textarea
+                            placeholder="Write a comment..."
+                            value={newComment}
+                            onChange={(e) => setNewComment(e.target.value)}
+                            className="min-h-[80px]"
+                          />
+                          <div className="flex justify-end">
+                            <Button onClick={() => handleComment(post.id)} size="sm" disabled={!newComment.trim()}>
+                              <Send className="h-4 w-4 mr-2" />
+                              Post Comment
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              ),
+          )}
+
           {/* Load More */}
           {visiblePosts < feedPosts.length && (
             <div className="text-center mt-6">
@@ -499,6 +529,13 @@ export default function HomeFeedPage() {
           )}
         </div>
       </div>
+      {/* Login Popup */}
+      <LoginPopup
+        isOpen={loginPopupState.isOpen}
+        onClose={closeLoginPopup}
+        actionMessage={loginPopupState.actionMessage}
+        onLoginSuccess={handleLoginSuccess}
+      />
     </AppLayout>
   )
 }
