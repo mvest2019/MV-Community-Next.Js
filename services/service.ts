@@ -9,7 +9,7 @@ export const addQuestion = async (
  
   try {
     const response = await axios.post(
-      `http://108.181.168.43:3010/api/thread/post`,
+      `https://108.181.168.43:3010/api/thread/post`,
       payload,
     );
     console.log('Response from addQuestion:', response);
@@ -29,7 +29,7 @@ export const getPublicGroups = async (
  
   try {
     const response = await axios.get(
-      `http://108.181.168.43:3010/api/groups`,
+      `https://108.181.168.43:3010/api/groups`,
      
     );
     console.log('Response from addQuestion:', response);
