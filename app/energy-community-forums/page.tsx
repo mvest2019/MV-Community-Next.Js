@@ -22,7 +22,7 @@ import {
   Mail,
 } from "lucide-react"
 import Image from "next/image"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { AppLayout } from "@/components/app-layout"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
@@ -181,10 +181,13 @@ export default function PublicGroupsPage() {
   //   },
   // ])
   const [publicGroups, setPublicGroups] = useState<PublicGroupInterface[]>([])
-
+ const didFetch = useRef(false)
  useEffect(() => {
+    if (didFetch.current) return
+    didFetch.current = true
+
     async function fetchGroups() {
-      setLoading(true) // Start loading
+      setLoading(true)
       const response = await getPublicGroups()
       console.log("API Response:", response)
       if (Array.isArray(response)) {
@@ -196,10 +199,10 @@ export default function PublicGroupsPage() {
           description: "Failed to load public groups. Please try again later.",
           variant: "destructive",
         })
-      } 
-       setLoading(false) // Stop loading
+      }
+      setLoading(false)
     }
-    fetchGroups() 
+    fetchGroups()
   }, [])
   
 
@@ -272,9 +275,7 @@ export default function PublicGroupsPage() {
     return 0
   })
 
-  // const featuredGroups = publicGroups.filter((group) => group.featured)
-  // const trendingGroups = [...publicGroups].sort((a, b) => b.weeklyPosts - a.weeklyPosts).slice(0, 4)
-
+ 
   const getCategoryIcon = (category: string) => {
     switch (category) {
       case "Regional":
@@ -328,13 +329,13 @@ function getTimeAgo(dateString: string): string {
   // Skeleton card component
   const GroupCardSkeleton = () => (
     <Card className="overflow-hidden">
-      <Skeleton className="h-32 w-full" />
+      <Skeleton className="h-32 w-full bg-gray-300 dark:bg-gray-700" />
       <div className="p-4">
-        <Skeleton className="h-6 w-2/3 mb-2" />
-        <Skeleton className="h-4 w-1/2 mb-4" />
+        <Skeleton className="h-6 w-2/3 mb-2 bg-gray-300 dark:bg-gray-700"  />
+        <Skeleton className="h-4 w-1/2 mb-4 bg-gray-300 dark:bg-gray-700" />
         <div className="flex gap-2">
-          <Skeleton className="h-8 w-20" />
-          <Skeleton className="h-8 w-20" />
+          <Skeleton className="h-8 w-20 bg-gray-300 dark:bg-gray-700" />
+          <Skeleton className="h-8 w-20 bg-gray-300 dark:bg-gray-700" />
         </div>
       </div>
     </Card>
@@ -343,12 +344,7 @@ function getTimeAgo(dateString: string): string {
     <AppLayout pageTitle="Public Groups" searchPlaceholder="Search public groups...">
       <div className="p-4 lg:p-6">
         <div className="max-w-6xl mx-auto">
-          {/* Note about public groups */}
-
-          {/* Rest of the existing content remains the same */}
-
-          {/* Categories Filter */}
-
+         
           {/* Tabs */}
           <Tabs defaultValue="all" className="w-full">
             {/* <TabsList className="grid w-full grid-cols-3 h-12">
@@ -368,164 +364,157 @@ function getTimeAgo(dateString: string): string {
 
             {/* All Groups Tab */}
             <TabsContent value="all" className="mt-6">
-           {/* <div  className={
-    loading
-      ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 opacity-50"
-      : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-  }>
-      {loading
-  ? Array.from({ length: 6 }).map((_, idx) => <GroupCardSkeleton key={idx} />)
-  : sortedGroups.map((group) => (
-      <Card key={group.grpId}>
-      
-      </Card>
-    ))
-}
-    </div> */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {sortedGroups.map((group) => {
-                  // const CategoryIcon = getCategoryIcon(group.category)
-                  const isJoined = joinedGroups.has(group.grpId)
+         <div
+  className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ${loading ? "opacity-50" : ""}`}
+>
+  {loading ? (
+    Array.from({ length: 6 }).map((_, idx) => <GroupCardSkeleton key={idx} />)
+  ) : (
+    sortedGroups.map((group) => {
+      const isJoined = joinedGroups.has(group.grpId);
 
-                  return (
-                    <Card
-                      key={group.grpId}
-                      className="hover:shadow-lg transition-shadow group overflow-hidden cursor-pointer"
-                      onClick={() => handleCardClick(group.grpId)}
-                    >
-                      <CardContent className="p-0">
-                        {/* Group Cover Image */}
-                        <div className="relative h-32 bg-gradient-to-br from-blue-500 to-purple-600 overflow-hidden">
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="w-full h-full relative">
-                              <Image
-                                src={group.img1 || "/placeholder.svg"}
-                                alt={group.grpName}
-                                fill
-                                className="object-cover group-hover:scale-105 transition-transform duration-300"
-                                priority
-                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                              />
-                            </div>
-                          </div>
-                          <div className="absolute inset-0 bg-black/20"></div>
-                          <div className="absolute top-3 right-3 flex gap-2">
-                            {/* {group.featured && (
-                              <Badge variant="secondary" className="bg-yellow-500/90 text-white border-0">
-                                <Star className="h-3 w-3 mr-1" fill="currentColor" />
-                                Featured
-                              </Badge>
-                            )} */}
-                            {/* <Badge variant="secondary" className={`border-0 ${getCategoryColor(group.category)}`}>
-                              <CategoryIcon className="h-3 w-3 mr-1" />
-                              {group.category}
-                            </Badge> */}
-                          </div>
-                          <div className="absolute bottom-3 left-3">
-                            <Avatar className="h-12 w-12 border-2 border-white">
-                              <AvatarImage src={group.img1 || "/placeholder.svg"} alt={group.grpName[0]} />
-                              <AvatarFallback className="bg-purple-600 text-white font-bold">
-                                {group.grpName[0]}
-                              </AvatarFallback>
-                            </Avatar>
-                          </div>
-                        </div>
+      return (
+        <Card
+          key={group.grpId}
+          className="hover:shadow-lg transition-shadow group overflow-hidden cursor-pointer"
+          onClick={() => handleCardClick(group.grpId)}
+        >
+          <CardContent className="p-0">
+            {/* Group Cover Image */}
+            <div className="relative h-32 bg-gradient-to-br from-blue-500 to-purple-600 overflow-hidden">
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-full h-full relative">
+                  <Image
+                    src={group.img1 || "/placeholder.svg"}
+                    alt={group.grpName}
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-300"
+                    priority
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  />
+                </div>
+              </div>
+              <div className="absolute inset-0 bg-black/20"></div>
+              <div className="absolute top-3 right-3 flex gap-2">
+                {/* Uncomment if needed */}
+                {/* {group.featured && (
+                  <Badge variant="secondary" className="bg-yellow-500/90 text-white border-0">
+                    <Star className="h-3 w-3 mr-1" fill="currentColor" />
+                    Featured
+                  </Badge>
+                )} */}
+                {/* <Badge variant="secondary" className={`border-0 ${getCategoryColor(group.category)}`}>
+                  <CategoryIcon className="h-3 w-3 mr-1" />
+                  {group.category}
+                </Badge> */}
+              </div>
+              <div className="absolute bottom-3 left-3">
+                <Avatar className="h-12 w-12 border-2 border-white">
+                  <AvatarImage src={group.img1 || "/placeholder.svg"} alt={group.grpName[0]} />
+                  <AvatarFallback className="bg-purple-600 text-white font-bold">
+                    {group.grpName[0]}
+                  </AvatarFallback>
+                </Avatar>
+              </div>
+            </div>
 
-                        {/* Group Content */}
-                        <div className="p-4">
-                          <div className="mb-3">
-                            <h3 className="font-semibold text-lg text-gray-900 break-words mb-1">{group.grpName}</h3>
-                            <p className="text-sm text-gray-600 break-words line-clamp-2">{group.grpDesc}</p>
-                          </div>
-
-                          {/* Stats */}
-                          <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
-                            <div className="flex items-center gap-1">
-                              <Users className="h-3 w-3" />
-                              <span>{group.memberCount.toLocaleString()}</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <MessageSquare className="h-3 w-3" />
-                              <span>{group.noOfPostsCount}</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Zap className="h-3 w-3" />
-                              <span>{getTimeAgo(group.createTs)}</span>
-                            </div>
-                          </div>
-
-                          {/* Tags */}
-                          <div className="flex flex-wrap gap-1 mb-3">
-                            {group.hashtags.slice(0, 3).map((tag) => (
-                              <Badge key={tag} variant="outline" className="text-xs">
-                                {tag}
-                              </Badge>
-                            ))}
-                          </div>
-
-                          {/* Action Buttons */}
-                          <div className="flex gap-2">
-                            <Button
-                              variant="outline"
-                              className="flex-1 text-sm"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                window.location.href = `/groups/${group.grpId}`
-                              }}
-                            >
-                              <Eye className="h-4 w-4 mr-2" />
-                              View
-                            </Button>
-                            {/* <Button
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                handleJoinGroup(group.id)
-                              }}
-                              className={`flex-1 text-sm ${
-                                isJoined ? "bg-green-600 hover:bg-green-700" : "bg-blue-600 hover:bg-blue-700"
-                              }`}
-                            >
-                              {isJoined ? (
-                                <>
-                                  <Shield className="h-4 w-4 mr-2" />
-                                  Joined
-                                </>
-                              ) : (
-                                <>
-                                  <UserPlus className="h-4 w-4 mr-2" />
-                                  Join
-                                </>
-                              )}
-                            </Button> */}
-                          </div>
-
-                          {/* Send Invitation Button */}
-                          {/* <Button
-                            variant="ghost"
-                            className="w-full mt-2 text-sm text-blue-600 hover:bg-blue-50"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleOpenInviteDialog(group)
-                            }}
-                          >
-                            <Mail className="h-4 w-4 mr-2" />
-                            Send Invitation
-                          </Button> */}
-
-                          {/* Last Activity */}
-                          {/* <div className="flex items-center gap-1 text-xs text-gray-400 mt-2">
-                            <Clock className="h-3 w-3" />
-                            <span>Active {group.lastActivity}</span>
-                          </div> */}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )
-                })}
+            {/* Group Content */}
+            <div className="p-4">
+              <div className="mb-3">
+                <h3 className="font-semibold text-lg text-gray-900 break-words mb-1">{group.grpName}</h3>
+                <p className="text-sm text-gray-600 break-words line-clamp-2">{group.grpDesc}</p>
               </div>
 
+              {/* Stats */}
+              <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
+                <div className="flex items-center gap-1">
+                  <Users className="h-3 w-3" />
+                  <span>{group.memberCount.toLocaleString()}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <MessageSquare className="h-3 w-3" />
+                  <span>{group.noOfPostsCount}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Zap className="h-3 w-3" />
+                  <span>{getTimeAgo(group.createTs)}</span>
+                </div>
+              </div>
+
+              {/* Tags */}
+              <div className="flex flex-wrap gap-1 mb-3">
+                {group.hashtags.slice(0, 3).map((tag) => (
+                  <Badge key={tag} variant="outline" className="text-xs">
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  className="flex-1 text-sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    window.location.href = `/groups/${group.grpId}`;
+                  }}
+                >
+                  <Eye className="h-4 w-4 mr-2" />
+                  View
+                </Button>
+                {/* Uncomment if needed */}
+                {/* <Button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleJoinGroup(group.id);
+                  }}
+                  className={`flex-1 text-sm ${
+                    isJoined ? "bg-green-600 hover:bg-green-700" : "bg-blue-600 hover:bg-blue-700"
+                  }`}
+                >
+                  {isJoined ? (
+                    <>
+                      <Shield className="h-4 w-4 mr-2" />
+                      Joined
+                    </>
+                  ) : (
+                    <>
+                      <UserPlus className="h-4 w-4 mr-2" />
+                      Join
+                    </>
+                  )}
+                </Button> */}
+              </div>
+
+              {/* Uncomment if needed */}
+              {/* <Button
+                variant="ghost"
+                className="w-full mt-2 text-sm text-blue-600 hover:bg-blue-50"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleOpenInviteDialog(group);
+                }}
+              >
+                <Mail className="h-4 w-4 mr-2" />
+                Send Invitation
+              </Button> */}
+
+              {/* Uncomment if needed */}
+              {/* <div className="flex items-center gap-1 text-xs text-gray-400 mt-2">
+                <Clock className="h-3 w-3" />
+                <span>Active {group.lastActivity}</span>
+              </div> */}
+            </div>
+          </CardContent>
+        </Card>
+      );
+    })
+  )}
+</div>
+
               {/* Empty State */}
-              {sortedGroups.length === 0 && (
+              {/* {sortedGroups.length === 0 && (
                 <Card className="text-center py-12">
                   <CardContent>
                     <Search className="h-16 w-16 text-gray-300 mx-auto mb-4" />
@@ -536,7 +525,7 @@ function getTimeAgo(dateString: string): string {
                     <Button>Clear Filters</Button>
                   </CardContent>
                 </Card>
-              )}
+              )} */}
             </TabsContent>
 
           

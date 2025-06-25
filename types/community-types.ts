@@ -38,3 +38,26 @@ export interface SidebarProps {
   className?: string
   publicGroups: PublicGroupInterface[]
 }
+// group threads responce interface
+export interface GroupThreadsInterface {
+  total: number
+  pageno: number
+  pageSize: number
+  totalPages: number
+  data: GroupThreadsDataInterface[]
+}
+// group threads data interface
+export interface GroupThreadsDataInterface {
+  threadId: string
+  postQuestion: string
+  lastReply: string
+  lastActivity: string
+  userImage: string
+  userId: number
+  userName: string
+  NofOfReplies: number
+  NofOfVotes: number
+  NofOfComments: number
+  _id: string
+  hashtags: any[]
+}

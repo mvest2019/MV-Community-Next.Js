@@ -44,7 +44,8 @@ export function Sidebar({ className }: SidebarProps) {
     title: "",
     content: "",
     category: "",
-    tags: [] as string[],
+    grpId: 0, // Replace with actual group ID if needed
+    hashtags: [] as string[],
     currentTag: "",
   })
 
@@ -63,7 +64,7 @@ export function Sidebar({ className }: SidebarProps) {
    const [editorContent, setEditorContent] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { executeWithAuth, loginPopupState, closeLoginPopup, handleLoginSuccess } = useAuthAction()
-const [publicGroups, setPublicGroups] = useState<{ grpId: number; grpName: string }[]>([])
+const [publicGroups, setPublicGroups] = useState<{ grpId: number; grpName: string;hashtags:any[] }[]>([])
   // Sample existing posts data
   const existingPosts = [
     {
@@ -161,7 +162,7 @@ const [publicGroups, setPublicGroups] = useState<{ grpId: number; grpName: strin
       isAction: true,
     },
     {
-      href: "/public-groups",
+      href: "/energy-community-forums",
       icon: FolderOpen,
       label: "Public Groups",
       iconColor: "text-yellow-400",
@@ -244,10 +245,12 @@ const [publicGroups, setPublicGroups] = useState<{ grpId: number; grpName: strin
       postType: "question",
       uId: 6, // Replace with actual user ID from context
       uname: "John Doe", // Replace with actual username from context
+      emailId: "johndoe2@gmail.com", // Replace with actual user email from context
       title: questionData.title,
       content: editorContent,
-      grpId: 45, // Replace with actual group ID
+      grpId: questionData.grpId, // Replace with actual group ID
       grpName: questionData.category || "Discussion",
+      hashtags: questionData.hashtags || [],
     }
 
       const response = await addQuestion(payload) 
@@ -259,7 +262,8 @@ const [publicGroups, setPublicGroups] = useState<{ grpId: number; grpName: strin
           title: "",
           content: "",
           category: "",
-          tags: [],
+          grpId: 0, // Reset group ID
+          hashtags: [],
           currentTag: "",
         })
         setEditorContent("")
@@ -308,7 +312,8 @@ const [publicGroups, setPublicGroups] = useState<{ grpId: number; grpName: strin
       title: "",
       content: "",
       category: "",
-      tags: [],
+      grpId: 0, // Reset group ID
+      hashtags: [],
       currentTag: "",
     })
     setEditorContent("")
@@ -357,16 +362,19 @@ const [publicGroups, setPublicGroups] = useState<{ grpId: number; grpName: strin
       ),
     )
   }
-  useEffect(() => {
-    async function fetchGroups() {
-      const response = await getPublicGroups()
-     setPublicGroups(
-        Array.isArray(response)
-          ? response.map((g: any) => ({ grpId: g.grpId, grpName: g.grpName }))
-          : []
-      ) }
-    fetchGroups()
-  }, [])
+  // Fetch public groups only when opening the Ask Question dialog
+const handleOpenAskQuestion = async () => {
+  // Only fetch if not already loaded
+  // if (publicGroups.length === 0) {
+    const response = await getPublicGroups()
+    setPublicGroups(
+      Array.isArray(response)
+        ? response.map((g: any) => ({ grpId: g.grpId, grpName: g.grpName,hashtags:g.hashtags }))
+        : []
+    )
+  // }
+  setAskQuestionOpen(true)
+}
   return (
     <div className={`bg-slate-700 text-white flex flex-col ${className}`}>
       {/* Logo/Header */}
@@ -423,7 +431,7 @@ const [publicGroups, setPublicGroups] = useState<{ grpId: number; grpName: strin
       {/* <div className="p-4"> */}
        <div className="p-4">
         <Button
-          onClick={() => executeWithAuth(() => setAskQuestionOpen(true), "ask a question")}
+          onClick={() => executeWithAuth(handleOpenAskQuestion, "ask a question")}
           className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold"
         >
           <Plus className="h-5 w-5 mr-2" fill="currentColor" />
@@ -434,10 +442,13 @@ const [publicGroups, setPublicGroups] = useState<{ grpId: number; grpName: strin
       {/* Ask Question Dialog */}
       <Dialog
         open={askQuestionOpen}
-        onOpenChange={(open) => {
-          if (!open) handleDialogClose()
-          else setAskQuestionOpen(open)
-        }}
+  onOpenChange={async (open) => {
+    if (open) {
+      await handleOpenAskQuestion()
+    } else {
+      handleDialogClose()
+    }
+  }}
       >
           {/* <DialogTrigger asChild>
             <Button onClick={() => executeWithAuth(() => setAskQuestionOpen(true), "ask a question")} className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold">
@@ -613,7 +624,7 @@ const [publicGroups, setPublicGroups] = useState<{ grpId: number; grpName: strin
     <button
       key={group.grpId}
       type="button"
-      onClick={() => setQuestionData({ ...questionData, category: group.grpName })}
+      onClick={() => setQuestionData({ ...questionData, category: group.grpName, grpId: group.grpId ,hashtags: group.hashtags || []})}
       className={`px-3 py-2 text-xs lg:text-sm rounded-lg border transition-colors text-left ${
         questionData.category === group.grpName
           ? "bg-orange-500 text-white border-orange-500"

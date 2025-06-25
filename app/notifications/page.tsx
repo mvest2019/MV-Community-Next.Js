@@ -154,7 +154,7 @@ export default function NotificationsPage() {
       },
       timestamp: "1 day ago",
       isRead: true,
-      actionUrl: "/public-groups",
+      actionUrl: "/energy-community-forums",
       priority: "normal",
     },
     {
