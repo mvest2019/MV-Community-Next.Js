@@ -32,6 +32,7 @@ export interface PublicGroupInterface {
   hashtags: string[]
   noOfPostsCount: number
   memberCount: number
+  url: string
 }
 // sidebar props interface
 export interface SidebarProps {
@@ -60,4 +61,31 @@ export interface GroupThreadsDataInterface {
   NofOfComments: number
   _id: string
   hashtags: any[]
+}
+// group threads details interface
+export interface GroupThreadDetailsInterface {
+  _id: string
+  threadId: string
+  createdAt: string
+  grpId: number
+  grpName: string
+  posts: ThreadPostInterface[]
+  __v: number
+  hashtags: string[]
+}
+// thread post interface
+export interface ThreadPostInterface {  
+  postId: number
+  postType: string
+  uId: number
+  uname: string
+  title: string
+  content: string
+  upvoteCnt: number
+  downvoteCnt: number
+  emailId: string
+  createdAt: string
+  upvotes: any[]
+  downvotes: any[]
+  comments: any[]
 }

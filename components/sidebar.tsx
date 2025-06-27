@@ -24,7 +24,8 @@ import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
-import { useToast } from "@/components/ui/use-toast"
+import { toast } from "sonner"
+// import { useToast } from "@/components/ui/use-toast"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Bold, Italic, Underline, List, ListOrdered, Link2 } from "lucide-react"
 import { addQuestion, getPublicGroups } from "@/services/service"
@@ -36,7 +37,7 @@ interface SidebarProps {
 }
 
 export function Sidebar({ className }: SidebarProps) {
-  const { toast } = useToast()
+  // const { toast } = useToast()
   const pathname = usePathname()
   const [askQuestionOpen, setAskQuestionOpen] = useState(false)
   const [createGroupOpen, setCreateGroupOpen] = useState(false)
@@ -271,21 +272,21 @@ const [publicGroups, setPublicGroups] = useState<{ grpId: number; grpName: strin
         setAutocompleteSuggestions([])
         setShowAllCategories(false)
         setAskQuestionOpen(false)
-
-         toast({
-          title: "Question posted",
-          description: "Your question has been posted successfully.",
-        })
+toast.message("Your question has been posted successfully."
+         
+        )
+        //  toast({
+        //   title: "Question posted",
+        //   description: "Your question has been posted successfully.",
+        // })
       } else {
         throw new Error("Failed to submit question")
       }
     } catch (error) {
       console.error("Error submitting question:", error)
-      toast({
-        title: "Error",
-        description: "Failed to post your question. Please try again.",
-        variant: "destructive",
-      })
+    toast.message("Your question has been posted successfully."
+         
+        )
     } finally {
       setIsSubmitting(false)
     }
@@ -340,10 +341,8 @@ const [publicGroups, setPublicGroups] = useState<{ grpId: number; grpName: strin
       body: "Join our new private group!",
     })
 
-    toast({
-      title: "Private group created",
-      description: `Your group "${newGroupData.name}" has been created and invitations sent.`,
-    })
+    toast(`Your group "${newGroupData.name}" has been created and invitations sent.`
+    )
   }
 
   const highlightMatch = (text: string, searchTerm: string) => {

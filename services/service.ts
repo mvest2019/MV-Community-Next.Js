@@ -1,7 +1,7 @@
 'use client';
 
 import axios from 'axios';
-import { AddQuestionRequestInterface, AskQuestionResponseInterface, GroupThreadsInterface, PublicGroupInterface } from "@/types/community-types";
+import { AddQuestionRequestInterface, AskQuestionResponseInterface, GroupThreadDetailsInterface, GroupThreadsInterface, PublicGroupInterface } from "@/types/community-types";
 
 export const addQuestion = async (
  payload: AddQuestionRequestInterface,
@@ -63,5 +63,18 @@ export const getGroupThreads = async (
   } catch (error) {
     console.log('Error in getGroupThreads:', error)
     throw new Error(String(error) || 'An error occurred while fetching group threads')
+  }
+}
+// export threadDetails
+export const getThreadDetails = async (
+  threadId: string,
+): Promise<GroupThreadDetailsInterface> => {
+  const response = await axios.get(
+    `https://mineralview-community.mineralview.com/api/getthreaddetails?threadId=${threadId}`
+  );
+  if (response.status === 200) {
+    return response.data; // should be a single thread detail object
+  } else {
+    throw new Error('Failed to fetch thread details');
   }
 }

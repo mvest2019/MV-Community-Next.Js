@@ -47,139 +47,6 @@ export default function PublicGroupsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [loading, setLoading] = useState(true) // <-- Add loading state
 
-
-  // Sample public groups data
-  // const [publicGroups, setPublicGroups] = useState([
-  //   {
-  //     id: 1,
-  //     name: "Texas Mineral Rights Owners",
-  //     description: "A community for mineral rights owners in Texas to share experiences and advice.",
-  //     memberCount: 2847,
-  //     postCount: 1234,
-  //     category: "Regional",
-  //     avatar: "/placeholder.svg?height=80&width=80",
-  //     coverImage: "/placeholder.svg?height=200&width=400",
-  //     moderators: ["GeologyExpertTX", "TexasLandman"],
-  //     isActive: true,
-  //     lastActivity: "2 hours ago",
-  //     weeklyPosts: 45,
-  //     tags: ["texas", "mineral-rights", "landowners"],
-  //     featured: true,
-  //   },
-  //   {
-  //     id: 2,
-  //     name: "Permian Basin Landowners",
-  //     description:
-  //       "Dedicated to landowners in the Permian Basin region. Share drilling updates, lease negotiations, and market insights.",
-  //     memberCount: 1456,
-  //     postCount: 892,
-  //     category: "Regional",
-  //     avatar: "/placeholder.svg?height=80&width=80",
-  //     coverImage: "/placeholder.svg?height=200&width=400",
-  //     moderators: ["PermianExpert", "DrillingSupervisor"],
-  //     isActive: true,
-  //     lastActivity: "1 hour ago",
-  //     weeklyPosts: 32,
-  //     tags: ["permian-basin", "drilling"],
-  //     featured: false,
-  //   },
-  //   {
-  //     id: 3,
-  //     name: "Lease Negotiation Experts",
-  //     description: "Professional group for sharing lease negotiation strategies, legal advice, and best practices.",
-  //     memberCount: 892,
-  //     postCount: 567,
-  //     category: "Professional",
-  //     avatar: "/placeholder.svg?height=80&width=80",
-  //     coverImage: "/placeholder.svg?height=200&width=400",
-  //     moderators: ["LegalEagle", "ContractPro"],
-  //     isActive: true,
-  //     lastActivity: "3 hours ago",
-  //     weeklyPosts: 28,
-  //     tags: ["legal", "negotiation", "contracts"],
-  //     featured: true,
-  //   },
-  //   {
-  //     id: 4,
-  //     name: "Eagle Ford Shale Community",
-  //     description: "Connect with other landowners and industry professionals in the Eagle Ford Shale region.",
-  //     memberCount: 634,
-  //     postCount: 423,
-  //     category: "Regional",
-  //     avatar: "/placeholder.svg?height=80&width=80",
-  //     coverImage: "/placeholder.svg?height=200&width=400",
-  //     moderators: ["EagleFordExpert"],
-  //     isActive: true,
-  //     lastActivity: "5 hours ago",
-  //     weeklyPosts: 18,
-  //     tags: ["eagle-ford", "shale"],
-  //     featured: false,
-  //   },
-  //   {
-  //     id: 5,
-  //     name: "Royalty Payment Support",
-  //     description: "Support group for landowners dealing with royalty payment problems and disputes.",
-  //     memberCount: 1123,
-  //     postCount: 789,
-  //     category: "Support",
-  //     avatar: "/placeholder.svg?height=80&width=80",
-  //     coverImage: "/placeholder.svg?height=200&width=400",
-  //     moderators: ["RoyaltyExpert", "PaymentPro"],
-  //     isActive: true,
-  //     lastActivity: "4 hours ago",
-  //     weeklyPosts: 25,
-  //     tags: ["royalty", "payments"],
-  //     featured: false,
-  //   },
-  //   {
-  //     id: 6,
-  //     name: "Oil & Gas Market Analysis",
-  //     description: "Professional analysis and discussion of oil and gas market trends, pricing, and forecasts.",
-  //     memberCount: 756,
-  //     postCount: 445,
-  //     category: "Professional",
-  //     avatar: "/placeholder.svg?height=80&width=80",
-  //     coverImage: "/placeholder.svg?height=200&width=400",
-  //     moderators: ["MarketAnalyst", "EnergyExpert"],
-  //     isActive: true,
-  //     lastActivity: "6 hours ago",
-  //     weeklyPosts: 22,
-  //     tags: ["market-analysis", "oil-prices"],
-  //     featured: true,
-  //   },
-  //   {
-  //     id: 7,
-  //     name: "New Landowner Support",
-  //     description: "A welcoming community for new mineral rights owners to ask questions and get guidance.",
-  //     memberCount: 445,
-  //     postCount: 234,
-  //     category: "Support",
-  //     avatar: "/placeholder.svg?height=80&width=80",
-  //     coverImage: "/placeholder.svg?height=200&width=400",
-  //     moderators: ["MentorPro", "NewbieFriend"],
-  //     isActive: true,
-  //     lastActivity: "8 hours ago",
-  //     weeklyPosts: 15,
-  //     tags: ["beginners", "support", "guidance"],
-  //     featured: false,
-  //   },
-  //   {
-  //     id: 8,
-  //     name: "Oklahoma Mineral Rights",
-  //     description: "Community for mineral rights owners and industry professionals in Oklahoma.",
-  //     memberCount: 567,
-  //     postCount: 334,
-  //     category: "Regional",
-  //     avatar: "/placeholder.svg?height=80&width=80",
-  //     coverImage: "/placeholder.svg?height=200&width=400",
-  //     moderators: ["OklahomaExpert"],
-  //     isActive: true,
-  //     lastActivity: "12 hours ago",
-  //     weeklyPosts: 12,
-  //     tags: ["oklahoma", "mineral-rights"],
-  //     featured: false,
-  //   },
-  // ])
   const [publicGroups, setPublicGroups] = useState<PublicGroupInterface[]>([])
  const didFetch = useRef(false)
  useEffect(() => {
@@ -302,8 +169,8 @@ export default function PublicGroupsPage() {
     }
   }
 
-  const handleCardClick = (groupId: number) => {
-    window.location.href = `/groups/${groupId}`
+  const handleCardClick = (groupId: number,url:string) => {
+    window.location.href = `/${url}/${groupId}`
   }
 // Converts ISO date string to "X weeks/months/years ago"
 function getTimeAgo(dateString: string): string {
@@ -377,7 +244,7 @@ function getTimeAgo(dateString: string): string {
         <Card
           key={group.grpId}
           className="hover:shadow-lg transition-shadow group overflow-hidden cursor-pointer"
-          onClick={() => handleCardClick(group.grpId)}
+          onClick={() => handleCardClick(group.grpId,group.url)}
         >
           <CardContent className="p-0">
             {/* Group Cover Image */}

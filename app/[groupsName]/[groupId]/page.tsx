@@ -36,7 +36,9 @@ import { Skeleton } from "@/components/ui/skeleton"
 
 export default function GroupPage() {
   const params = useParams()
-  const groupId = params.id
+  const groupId = params.groupId
+  const url = params.groupsName
+  console.log(params, "params")
   const [groupThreads, setGroupThreads] = useState<GroupThreadsInterface | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -257,12 +259,11 @@ useEffect(() => {
   ) : (
     <>
       {/* Render this part only when loading is false */}
-      {!groupThreads || groupThreads.data.length === 0 ? (
-        <div className="text-gray-500 text-center py-8">No posts found for this group.</div>
-      ) : (
-        // 🧵 Map through threads when available
-        groupThreads.data.map((thread: GroupThreadsDataInterface) => (
-          <Link key={thread.threadId} href={`/groups/${groupId}/post/${thread.threadId}`}>
+    {!Array.isArray(groupThreads?.data) || groupThreads.data.length === 0 ? (
+      <div className="text-gray-500 text-center py-8">No posts found for this group.</div>
+    ) : (
+      groupThreads.data.map((thread: GroupThreadsDataInterface) => (
+          <Link key={thread.threadId} href={`/${url}/${groupId}/${thread.threadId}`}>
             <Card className="hover:shadow-md transition-shadow cursor-pointer mb-3">
               <CardContent className="p-6">
                 {/* Post Header */}
@@ -334,16 +335,17 @@ useEffect(() => {
 
                 {/* 🏷 Hashtags */}
                 <div className="flex flex-wrap gap-2 mb-4">
-                  {thread.hashtags.map((tag) => (
-                    <Badge
-                      key={tag}
-                      variant="secondary"
-                      className="text-xs bg-gray-100 text-gray-700"
-                    >
-                      #{tag}
-                    </Badge>
-                  ))}
-                </div>
+  {Array.isArray(thread.hashtags) &&
+    thread.hashtags.map((tag) => (
+      <Badge
+        key={tag}
+        variant="secondary"
+        className="text-xs bg-gray-100 text-gray-700"
+      >
+        {tag}
+      </Badge>
+    ))}
+</div>
 
                 {/* 📊 Engagement Stats */}
                 <div className="flex items-center justify-between pt-4 border-t border-gray-100">
