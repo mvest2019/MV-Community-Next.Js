@@ -25,30 +25,37 @@ export function LoginPopup({ isOpen, onClose, actionMessage, onLoginSuccess }: L
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError("")
+  
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setError("");
 
-    try {
-      const success = await login(email, password)
-      if (success) {
-        setEmail("")
-        setPassword("")
-        onClose()
-        // Execute the original action after successful login
-        if (onLoginSuccess) {
-          onLoginSuccess()
-        }
-      } else {
-        setError("Invalid email or password. Please try again.")
-      }
-    } catch (error) {
-      setError("Login failed. Please try again.")
-    } finally {
-      setIsLoading(false)
-    }
+  if (!isValidEmail(email)) {
+    setError("Please enter a valid email address.");
+    return;
   }
+  if (!isValidPassword(password)) {
+    setError("Password must be at least 6 characters.");
+    return;
+  }
+
+  setIsLoading(true);
+  try {
+    const success = await login(email, password);
+    if (success) {
+      setEmail("");
+      setPassword("");
+      onClose();
+      if (onLoginSuccess) onLoginSuccess();
+    } else {
+      setError("Invalid email or password. Please try again.");
+    }
+  } catch (error) {
+    setError("Invalid email or password. Please try again.");
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const handleClose = () => {
     setEmail("")
@@ -56,7 +63,25 @@ export function LoginPopup({ isOpen, onClose, actionMessage, onLoginSuccess }: L
     setError("")
     onClose()
   }
-
+  async function loginUser(email: string, password: string) {
+  const response = await fetch("https://mview-info.mineralview.com/User/login_user", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email_id: email,
+      password,
+      id: ""
+    }),
+  });
+  if (!response.ok) throw new Error("Login failed");
+  return response.json();
+}
+function isValidEmail(email: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+function isValidPassword(password: string) {
+  return password.length >= 6; // or your own rule
+}
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md">

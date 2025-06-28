@@ -494,7 +494,7 @@ export default function MediaPage() {
                       <Button
                         onClick={() => {
                           // Handle album creation logic here
-                          console.log("Creating album:", newAlbumData)
+                         
                           setCreateAlbumOpen(false)
                           setNewAlbumData({ title: "", description: "", privacy: "public", category: "Property" })
                         }}

@@ -5,11 +5,12 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { MapPin, MessageSquare, Eye, Clock, TrendingUp, Users, HelpCircle, Bell } from "lucide-react"
 import { AppLayout } from "@/components/app-layout"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
+import { getRecentActivity } from "@/services/service"
 
 export default function CommunityPage() {
-  const [activeTab, setActiveTab] = useState<"featured" | "recent">("featured")
+  const [activeTab, setActiveTab] = useState<"featured" | "recent">("recent")
 
   const featuredDiscussions = [
     {
@@ -61,60 +62,103 @@ export default function CommunityPage() {
       postUrl: "/groups/4/post/4",
     },
   ]
+function RecentActivitySkeleton() {
+  return (
+    <div className="flex items-start gap-3 sm:gap-4 p-4 sm:p-5 bg-white rounded-lg border mb-4 animate-pulse">
+      <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-gray-200" />
+      <div className="flex-1 min-w-0">
+        <div className="h-4 bg-gray-200 rounded w-1/3 mb-2" />
+        <div className="h-3 bg-gray-100 rounded w-2/3 mb-1" />
+        <div className="h-3 bg-gray-100 rounded w-1/4" />
+      </div>
+    </div>
+  );
+}
+  // const recentActivity = [
+  //   {
+  //     id: 1,
+  //     user: "TX_Owner82",
+  //     avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=32&h=32&fit=crop&crop=face",
+  //     action: "replied to",
+  //     target: "Operator delaying royalty payments",
+  //     timestamp: "2 hours ago",
+  //     extra: "3 new replies",
+  //     postUrl: "/groups/1/post/5#comment-123",
+  //   },
+  //   {
+  //     id: 2,
+  //     user: "PermianLandman",
+  //     avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=32&h=32&fit=crop&crop=face",
+  //     action: "started a new thread in",
+  //     target: "Lease Negotiation",
+  //     timestamp: "5 hours ago",
+  //     extra: "25 views",
+  //     postUrl: "/groups/2/post/6",
+  //   },
+  //   {
+  //     id: 3,
+  //     user: "MineralGeologist",
+  //     avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=32&h=32&fit=crop&crop=face",
+  //     action: "answered a question in",
+  //     target: "Mineral Identification",
+  //     timestamp: "8 hours ago",
+  //     extra: "Marked as best answer",
+  //     postUrl: "/groups/3/post/7#comment-456",
+  //   },
+  //   {
+  //     id: 4,
+  //     user: "EnergyExpert",
+  //     avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=32&h=32&fit=crop&crop=face",
+  //     action: "shared a document in",
+  //     target: "Legal Resources",
+  //     timestamp: "12 hours ago",
+  //     extra: "15 downloads",
+  //     postUrl: "/groups/4/post/8",
+  //   },
+  //   {
+  //     id: 5,
+  //     user: "WestTexasLandowner",
+  //     avatar: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=32&h=32&fit=crop&crop=face",
+  //     action: "joined the group",
+  //     target: "Permian Basin Owners",
+  //     timestamp: "1 day ago",
+  //     extra: "Welcome new member!",
+  //     postUrl: "/groups/5",
+  //   },
+  // ]
 
-  const recentActivity = [
-    {
-      id: 1,
-      user: "TX_Owner82",
-      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=32&h=32&fit=crop&crop=face",
-      action: "replied to",
-      target: "Operator delaying royalty payments",
-      timestamp: "2 hours ago",
-      extra: "3 new replies",
-      postUrl: "/groups/1/post/5#comment-123",
-    },
-    {
-      id: 2,
-      user: "PermianLandman",
-      avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=32&h=32&fit=crop&crop=face",
-      action: "started a new thread in",
-      target: "Lease Negotiation",
-      timestamp: "5 hours ago",
-      extra: "25 views",
-      postUrl: "/groups/2/post/6",
-    },
-    {
-      id: 3,
-      user: "MineralGeologist",
-      avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=32&h=32&fit=crop&crop=face",
-      action: "answered a question in",
-      target: "Mineral Identification",
-      timestamp: "8 hours ago",
-      extra: "Marked as best answer",
-      postUrl: "/groups/3/post/7#comment-456",
-    },
-    {
-      id: 4,
-      user: "EnergyExpert",
-      avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=32&h=32&fit=crop&crop=face",
-      action: "shared a document in",
-      target: "Legal Resources",
-      timestamp: "12 hours ago",
-      extra: "15 downloads",
-      postUrl: "/groups/4/post/8",
-    },
-    {
-      id: 5,
-      user: "WestTexasLandowner",
-      avatar: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=32&h=32&fit=crop&crop=face",
-      action: "joined the group",
-      target: "Permian Basin Owners",
-      timestamp: "1 day ago",
-      extra: "Welcome new member!",
-      postUrl: "/groups/5",
-    },
-  ]
+  const [recentActivity, setRecentActivity] = useState<any[]>([]);
+  const [loadingRecent, setLoadingRecent] = useState(true);
 
+  // Add this at the top of your file (outside the component)
+function timeAgo(dateString: string) {
+  const date = new Date(dateString);
+  const now = new Date();
+  const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+  if (isNaN(seconds)) return ""; // Invalid date
+
+  if (seconds < 60) return "Just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes} min${minutes > 1 ? "s" : ""} ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} hour${hours > 1 ? "s" : ""} ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days} day${days > 1 ? "s" : ""} ago`;
+  const months = Math.floor(days / 30);
+  if (months < 12) return `${months} month${months > 1 ? "s" : ""} ago`;
+  const years = Math.floor(months / 12);
+  return `${years} year${years > 1 ? "s" : ""} ago`;
+}
+
+  useEffect(() => {
+    if (activeTab === "recent") {
+      setLoadingRecent(true);
+      getRecentActivity()
+        .then((data) => setRecentActivity(data))
+        .finally(() => setLoadingRecent(false));
+    }
+  }, [activeTab]);
   return (
     <AppLayout pageTitle="Welcome to Community" searchPlaceholder="Search...">
       <div className="p-3 sm:p-4 lg:p-6">
@@ -158,6 +202,16 @@ export default function CommunityPage() {
           {/* Tab Navigation - Capsule Style */}
           <div className="mb-4 sm:mb-6 flex justify-center">
             <div className="bg-gray-100 p-1 rounded-full inline-flex">
+                <button
+                onClick={() => setActiveTab("recent")}
+                className={`px-3 sm:px-6 py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-200 ${
+                  activeTab === "recent" ? "bg-blue-600 text-white shadow-sm" : "text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 inline" />
+                <span className="hidden sm:inline">Recent Activity</span>
+                <span className="sm:hidden">Recent</span>
+              </button>
               <button
                 onClick={() => setActiveTab("featured")}
                 className={`px-3 sm:px-6 py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-200 ${
@@ -168,16 +222,7 @@ export default function CommunityPage() {
                 <span className="hidden sm:inline">Featured Discussions</span>
                 <span className="sm:hidden">Featured</span>
               </button>
-              <button
-                onClick={() => setActiveTab("recent")}
-                className={`px-3 sm:px-6 py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-200 ${
-                  activeTab === "recent" ? "bg-blue-600 text-white shadow-sm" : "text-gray-600 hover:text-gray-900"
-                }`}
-              >
-                <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 inline" />
-                <span className="hidden sm:inline">Recent Activity</span>
-                <span className="sm:hidden">Recent</span>
-              </button>
+            
             </div>
           </div>
 
@@ -231,36 +276,52 @@ export default function CommunityPage() {
           )}
 
           {activeTab === "recent" && (
-            <div className="space-y-6 sm:space-y-8">
-              {recentActivity.map((activity) => (
-                <Link key={activity.id} href={activity.postUrl}>
-                  <div className="flex items-start gap-3 sm:gap-4 p-4 sm:p-5 bg-white rounded-lg border hover:border-gray-300 hover:bg-gray-50 transition-colors cursor-pointer mb-4">
-                    <Avatar className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0">
-                      <AvatarImage src={activity.avatar || "/placeholder.svg"} />
-                      <AvatarFallback className="bg-blue-100 text-blue-600 text-xs sm:text-sm">
-                        {activity.user.slice(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm sm:text-base break-words mb-2">
-                        <span className="font-medium text-blue-600">{activity.user}</span> {activity.action}{" "}
-                        <span className="italic">"{activity.target}"</span>
-                      </p>
-                      <div className="flex flex-wrap items-center gap-2 sm:gap-3 lg:gap-4 text-xs sm:text-sm text-gray-500">
-                        <div className="flex items-center gap-1">
-                          <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
-                          <span>{activity.timestamp}</span>
-                        </div>
-                        <span>{activity.extra}</span>
+          <div className="space-y-6 sm:space-y-8">
+         {loadingRecent ? (
+      <>
+        <RecentActivitySkeleton />
+        <RecentActivitySkeleton />
+        <RecentActivitySkeleton />
+      </>
+    ) : recentActivity.length === 0 ? (
+      !loadingRecent && (
+        <div className="text-center text-gray-500 py-8">No recent activity found.</div>
+      )
+    ) : (
+           recentActivity.map((activity, idx) => (
+  <Link
+    key={`${activity.id ?? idx}-${activity.postUrl ?? idx}`}
+    href={activity.postUrl || "#"}
+  >
+                <div className="flex items-start gap-3 sm:gap-4 p-4 sm:p-5 bg-white rounded-lg border hover:border-gray-300 hover:bg-gray-50 transition-colors cursor-pointer mb-4">
+                  <Avatar className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0">
+                    {/* <AvatarImage src={activity.avatar || "/placeholder.svg"} /> */}
+                    <AvatarFallback className="bg-purple-600 text-white text-lg font-semibold">
+                      {activity.userName ? activity.userName[0].toUpperCase() : "?"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm sm:text-base break-words mb-2">
+                      <span className="font-medium text-blue-600">{activity.userName}</span> {activity.postQuestion}{" "}
+                      {/* <span className="italic">"{activity.target}"</span> */}
+                    </p>
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3 lg:gap-4 text-xs sm:text-sm text-gray-500">
+                      <div className="flex items-center gap-1">
+                        <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
+                        <span>{timeAgo(activity.lastActivity)}</span>
                       </div>
+                      <span>{activity.extra}</span>
                     </div>
                   </div>
-                </Link>
-              ))}
-            </div>
+                </div>
+              </Link>
+            ))
+          )}
+        </div>
           )}
         </div>
       </div>
     </AppLayout>
-  )
+  );
 }
+

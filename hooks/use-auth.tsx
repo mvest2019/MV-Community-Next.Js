@@ -2,13 +2,15 @@
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
 
-interface User {
-  id: number
-  name: string
+export interface User {
+  member_id: number
+  name?: string
   email: string
-  username: string
+  username?: string
   avatar?: string
   verified?: boolean
+  f_name?: string
+  l_name?: string
 }
 
 interface AuthContextType {
@@ -22,51 +24,43 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
+ const [user, setUser] = useState(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
-    // Check if user is logged in on app start
-    const savedUser = localStorage.getItem("user")
+    const savedUser = localStorage.getItem("user");
     if (savedUser) {
-      try {
-        const userData = JSON.parse(savedUser)
-        setUser(userData)
-        setIsLoggedIn(true)
-      } catch (error) {
-        console.error("Error parsing saved user data:", error)
-        localStorage.removeItem("user")
-      }
+      setUser(JSON.parse(savedUser));
+      setIsLoggedIn(true);
     }
-  }, [])
+  }, []);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
-    try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      // Mock login validation
-      if (email && password) {
-        const userData: User = {
-          id: 8,
-          name: "John Doe",
-          email: email,
-          username: "john_doe",
-          avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face",
-          verified: true,
-        }
-
-        setUser(userData)
-        setIsLoggedIn(true)
-        localStorage.setItem("user", JSON.stringify(userData))
-        return true
-      }
-      return false
-    } catch (error) {
-      console.error("Login error:", error)
-      return false
+ // In hooks/use-auth.tsx
+const login = async (email: string, password: string): Promise<boolean> => {
+  try {
+    const response = await fetch("https://mview-info.mineralview.com/User/login_user", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email_id: email,
+        password,
+        id: ""
+      }),
+    });
+    if (!response.ok) return false;
+    const result = await response.json();
+    // You may need to adjust this based on your API response structure
+    if (result && result.data) {
+      localStorage.setItem("user", JSON.stringify(result.data));
+      setUser(result.data);
+      setIsLoggedIn(true);
+      return true;
     }
+    return false;
+  } catch (error) {
+    return false;
   }
+};
 
   const logout = () => {
     setUser(null)
@@ -78,7 +72,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return isLoggedIn
   }
 
-  return <AuthContext.Provider value={{ user, isLoggedIn, login, logout, checkAuth }}>{children}</AuthContext.Provider>
+  return (
+    <AuthContext.Provider value={{ user, isLoggedIn, login, logout, checkAuth }}>
+      {children}
+    </AuthContext.Provider>
+  )
 }
 
 export function useAuth() {

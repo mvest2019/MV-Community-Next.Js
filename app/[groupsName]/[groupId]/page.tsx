@@ -38,7 +38,6 @@ export default function GroupPage() {
   const params = useParams()
   const groupId = params.groupId
   const url = params.groupsName
-  console.log(params, "params")
   const [groupThreads, setGroupThreads] = useState<GroupThreadsInterface | null>(null)
   const [loading, setLoading] = useState(true)
 

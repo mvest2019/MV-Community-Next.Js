@@ -46,13 +46,27 @@ import { AppLayout } from "@/components/app-layout"
 import { useToast } from "@/components/ui/use-toast"
 import { getThreadDetails } from "@/services/service"
 import { GroupThreadDetailsInterface } from "@/types/community-types"
-import { addThreadComment } from "@/services/threadId-service"
+import { addThreadComment, voteThreadPost } from "@/services/threadId-service"
 import { addThreadAnswer } from "@/services/threadId-service";
+import { voteThreadComment } from "@/services/threadId-service";
+import { toast } from "sonner"
+import { LoginPopup } from "@/components/login-popup"
+import { getCurrentUser } from "@/hooks/utils/auth"
+import { useAuth } from "@/hooks/use-auth"
 
 export default function PostDetailPage() {
-  const { toast } = useToast()
+  // Get the current user from localStorage
+const userStr = typeof window !== "undefined" ? localStorage.getItem("user") : null;
+const user = userStr ? JSON.parse(userStr) : null;
+
+// Now you can access:
+const uId = user?.member_id;
+const userName = user ? `${user.f_name} ${user.l_name}` : "";
+
+
+  // Get the parameters from the URL
   const params = useParams()
-  console.log("PostDetailPage params:", params)
+ 
   const groupsName = params.groupsName
   const groupId = params.groupId
   const threadId = params.threadId;
@@ -60,13 +74,11 @@ export default function PostDetailPage() {
   const commentEditorRefs = useRef<{ [key: number]: HTMLDivElement | null }>({})
   const answerEditorRef = useRef<HTMLDivElement>(null)
 
-  const [isLiked, setIsLiked] = useState(false)
   const [isBookmarked, setIsBookmarked] = useState(false)
   const [showReplyEditor, setShowReplyEditor] = useState(false)
   const [replyContent, setReplyContent] = useState("")
-  const [likedComments, setLikedComments] = useState<Set<number>>(new Set([2, 4]))
-  const [replyingToComment, setReplyingToComment] = useState<number | null>(null)
-  const [commentReplyContent, setCommentReplyContent] = useState("")
+//  const [isLoggedIn, setIsLoggedIn] = useState(false); // Set this based on your auth logic
+const [showLoginPopup, setShowLoginPopup] = useState(false);
   const [showShareOptions, setShowShareOptions] = useState(false)
   const [isNotificationEnabled, setIsNotificationEnabled] = useState(false)
   const [showAnswerEditor, setShowAnswerEditor] = useState(false)
@@ -82,215 +94,26 @@ export default function PostDetailPage() {
    const [threadDetail, setThreadDetail] = useState<GroupThreadDetailsInterface | null>(null);
 
   // Question voting state
-  const [questionVotes, setQuestionVotes] = useState({
-    upvotes: 42,
-    downvotes: 3,
-    userVote: null as "up" | "down" | null,
-  })
+  type type = "upvote" | "downvote";
+ const [questionVotes, setQuestionVotes] = useState<{
+  upvotes: number;
+  downvotes: number;
+  userVote: type | null;
+}>({
+  upvotes: 42,
+  downvotes: 3,
+  userVote: null,
+});
+// // Comment voting state
+const [commentVotes, setCommentVotes] = useState<{
+  [key: number]: { upvotes: number; downvotes: number; userVote: "upvote" | "downvote" | null }
+}>({});
 
-  // Comment voting state
-  const [commentVotes, setCommentVotes] = useState<{
-    [key: number]: { upvotes: number; downvotes: number; userVote: "up" | "down" | null }
-  }>({
-    1: { upvotes: 15, downvotes: 2, userVote: null },
-    2: { upvotes: 12, downvotes: 0, userVote: null },
-    3: { upvotes: 7, downvotes: 3, userVote: null },
-    4: { upvotes: 18, downvotes: 1, userVote: null },
-  })
-
-  // Answer voting state
-  const [answerVotes, setAnswerVotes] = useState<{
-    [key: number]: { upvotes: number; downvotes: number; userVote: "up" | "down" | null }
-  }>({
-    1: { upvotes: 24, downvotes: 2, userVote: null },
-    2: { upvotes: 18, downvotes: 1, userVote: null },
-    3: { upvotes: 12, downvotes: 3, userVote: null },
-  })
-
-  // Answer comment voting state
-  const [answerCommentVotes, setAnswerCommentVotes] = useState<{
-    [key: string]: { upvotes: number; downvotes: number; userVote: "up" | "down" | null }
-  }>({
-    "1-1": { upvotes: 8, downvotes: 1, userVote: null },
-    "1-2": { upvotes: 5, downvotes: 0, userVote: null },
-    "2-1": { upvotes: 3, downvotes: 0, userVote: null },
-  })
-
-  // Sample post data
-  const [postData, setPostData] = useState({
-    id: 1,
-    title: "Question about royalty payment delays in Permian Basin",
-    content: `<p>Has anyone experienced delays in royalty payments from operators in the Permian Basin recently? My payments have been delayed for the past 3 months and I'm not sure what steps to take.</p>
-
-<p>Here are the details of my situation:</p>
-<ul>
-<li>Lease signed in January 2023</li>
-<li>Production started in June 2023</li>
-<li>First payments were on time until October 2024</li>
-<li>No communication from the operator about the delays</li>
-</ul>
-
-<p>I've tried contacting their accounting department but haven't received a response. Has anyone dealt with similar issues? What are my options here?</p>
-
-<p><strong>Any advice would be greatly appreciated!</strong></p>`,
-    author: {
-      name: "Sarah Mitchell",
-      username: "SarahM_Landowner",
-      avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=40&h=40&fit=crop&crop=face",
-      verified: true,
-      reputation: 4.9,
-      joinedDate: "March 2023",
-      postsCount: 127,
-    },
-    timestamp: "2 days ago",
-    category: "Royalty Payments",
-    tags: ["royalty-payments", "permian-basin", "operator-issues", "legal-advice"],
-    engagement: {
-      likes: 24,
-      comments: 8,
-      shares: 3,
-      views: 156,
-    },
-    isBestAnswer: false,
-    isPinned: false,
-    groupInfo: {
-      name: "Texas Mineral Rights Owners",
-      id: 1,
-    },
-  })
-
-  // Sample question comments data
-  const [questionComments, setQuestionComments] = useState([
-    {
-      id: 1,
-      author: {
-        name: "TexasLandman",
-        username: "TexasLandman",
-        avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=40&h=40&fit=crop&crop=face",
-        verified: false,
-        reputation: 4.5,
-      },
-      content: "Have you checked if there were any changes to your division order recently?",
-      timestamp: "1 day ago",
-    },
-    {
-      id: 2,
-      author: {
-        name: "RoyaltyExpert",
-        username: "RoyaltyExpert",
-        avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop&crop=face",
-        verified: true,
-        reputation: 4.7,
-      },
-      content:
-        "This is becoming more common in the Permian Basin lately. I'd suggest documenting all your attempts to contact them.",
-      timestamp: "30 minutes ago",
-    },
-  ])
-
-  // Sample answers data
-  const [answers, setAnswers] = useState([
-    {
-      id: 1,
-      author: {
-        name: "GeologyExpertTX",
-        username: "GeologyExpertTX",
-        avatar: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=40&h=40&fit=crop&crop=face",
-        verified: true,
-        reputation: 4.8,
-      },
-      content: `<p>I've seen similar issues with several operators in the Permian Basin. Here's what I recommend:</p>
-
-<ol>
-<li><strong>Check your division order</strong> - Make sure there haven't been any recent changes</li>
-<li><strong>Review your lease agreement</strong> - Look for clauses about payment timing</li>
-<li><strong>Contact the Texas Railroad Commission</strong> - They can help with payment disputes</li>
-</ol>
-
-<p>In my experience, most delays are due to title issues or changes in ownership that need to be resolved. Don't wait too long to take action!</p>`,
-      timestamp: "1 day ago",
-      isAccepted: true,
-      comments: [
-        {
-          id: 1,
-          author: {
-            name: "Sarah Mitchell",
-            username: "SarahM_Landowner",
-            avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=40&h=40&fit=crop&crop=face",
-            verified: true,
-          },
-          content:
-            "Thank you for the detailed response! I'll check my division order first. Do you know how to contact the Railroad Commission?",
-          timestamp: "1 day ago",
-        },
-        {
-          id: 2,
-          author: {
-            name: "GeologyExpertTX",
-            username: "GeologyExpertTX",
-            avatar: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=40&h=40&fit=crop&crop=face",
-            verified: true,
-          },
-          content:
-            "You can file a complaint online at their website or call their Oil and Gas Division directly. They're usually very helpful with these issues.",
-          timestamp: "1 day ago",
-        },
-      ],
-    },
-    {
-      id: 2,
-      author: {
-        name: "LegalEagle",
-        username: "LegalEagle",
-        avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face",
-        verified: true,
-        reputation: 4.9,
-      },
-      content: `<p><strong>Legal perspective:</strong> In Texas, operators are required to pay royalties within a certain timeframe. If they're consistently late, you may be entitled to interest on the delayed payments.</p>
-
-<p>I'd recommend sending a certified letter to the operator documenting the issue and requesting immediate payment. This creates a paper trail that could be useful later.</p>
-
-<p><em>This is not legal advice - consult with a qualified attorney for your specific situation.</em></p>`,
-      timestamp: "12 hours ago",
-      isAccepted: false,
-      comments: [
-        {
-          id: 1,
-          author: {
-            name: "Sarah Mitchell",
-            username: "SarahM_Landowner",
-            avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=40&h=40&fit=crop&crop=face",
-            verified: true,
-          },
-          content: "Do you have a template for this kind of letter that you could share?",
-          timestamp: "10 hours ago",
-        },
-      ],
-    },
-    {
-      id: 3,
-      author: {
-        name: "RoyaltyExpert",
-        username: "RoyaltyExpert",
-        avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop&crop=face",
-        verified: true,
-        reputation: 4.7,
-      },
-      content: `<p>This is unfortunately becoming more common. I'd also suggest:</p>
-
-<ul>
-<li>Documenting all your attempts to contact them</li>
-<li>Checking if other landowners in your area are having similar issues</li>
-<li>Consider consulting with an oil and gas attorney if the amounts are significant</li>
-</ul>
-
-<p>Keep detailed records of everything - dates, amounts, communications, etc. This will be important if you need to take legal action.</p>`,
-      timestamp: "18 hours ago",
-      isAccepted: false,
-      comments: [],
-    },
-  ])
-
+// // Answer voting state
+// const [answerCommentVotes, setAnswerCommentVotes] = useState<{
+//   [key: string]: { upvotes: number; downvotes: number; userVote: "upvote" | "downvote" | null }
+// }>({});
+  
   // Sample user profiles data
   const userProfiles = {
     SarahM_Landowner: {
@@ -373,213 +196,112 @@ export default function PostDetailPage() {
       joinedDate: "November 2023",
     },
   }
-  const handleQuestionVote = (voteType: "up" | "down") => {
-    const newVotes = { ...questionVotes }
-
-    // If user already voted this way, remove the vote
-    if (questionVotes.userVote === voteType) {
-      newVotes.userVote = null
-      if (voteType === "up") {
-        newVotes.upvotes = Math.max(0, questionVotes.upvotes - 1)
-      } else {
-        newVotes.downvotes = Math.max(0, questionVotes.downvotes - 1)
-      }
-    }
-    // If user voted the opposite way, switch the vote
-    else if (questionVotes.userVote !== null) {
-      newVotes.userVote = voteType
-      if (voteType === "up") {
-        newVotes.upvotes = questionVotes.upvotes + 1
-        newVotes.downvotes = Math.max(0, questionVotes.downvotes - 1)
-      } else {
-        newVotes.downvotes = questionVotes.downvotes + 1
-        newVotes.upvotes = Math.max(0, questionVotes.upvotes - 1)
-      }
-    }
-    // If user hasn't voted yet, add the vote
-    else {
-      newVotes.userVote = voteType
-      if (voteType === "up") {
-        newVotes.upvotes = questionVotes.upvotes + 1
-      } else {
-        newVotes.downvotes = questionVotes.downvotes + 1
-      }
-    }
-
-    setQuestionVotes(newVotes)
+  const { isLoggedIn } = useAuth();
+const handleQuestionVote = async (postId?: number, type?: "upvote" | "downvote") => {
+ 
+   if (!isLoggedIn) {
+     console.log(isLoggedIn, "isLoggedIn in handleQuestionVote");
+    setShowLoginPopup(true);
+    return;
   }
-
-  const handleCommentVote = (commentId: number, voteType: "up" | "down") => {
-    const currentVotes = commentVotes[commentId] || { upvotes: 0, downvotes: 0, userVote: null }
-    const newVotes = { ...currentVotes }
-
-    // If user already voted this way, remove the vote
-    if (currentVotes.userVote === voteType) {
-      newVotes.userVote = null
-      if (voteType === "up") {
-        newVotes.upvotes = Math.max(0, currentVotes.upvotes - 1)
-      } else {
-        newVotes.downvotes = Math.max(0, currentVotes.downvotes - 1)
-      }
+  if (!threadDetail) {
+    console.error("threadDetail is undefined in handleQuestionVote");
+    return;
+  }
+  if (!postId || !type) {
+    console.error("postId or type is undefined in handleQuestionVote");
+    return;
+  }
+  const threadIdVal = threadDetail.threadId;
+  if (!threadIdVal) {
+    console.error("threadId is undefined in handleQuestionVote");
+    return;
+  }
+  try {
+    await voteThreadPost({
+      threadId: threadIdVal,
+      postId,
+      type,
+      uId,
+      uname: userName,
+    });
+    const updatedDetail = await getThreadDetails(String(threadIdVal));
+    if (!updatedDetail) {
+      console.error("API returned undefined for updatedDetail");
+      return;
     }
-    // If user voted the opposite way, switch the vote
-    else if (currentVotes.userVote !== null) {
-      newVotes.userVote = voteType
-      if (voteType === "up") {
-        newVotes.upvotes = currentVotes.upvotes + 1
-        newVotes.downvotes = Math.max(0, currentVotes.downvotes - 1)
-      } else {
-        newVotes.downvotes = currentVotes.downvotes + 1
-        newVotes.upvotes = Math.max(0, currentVotes.upvotes - 1)
-      }
-    }
-    // If user hasn't voted yet, add the vote
-    else {
-      newVotes.userVote = voteType
-      if (voteType === "up") {
-        newVotes.upvotes = currentVotes.upvotes + 1
-      } else {
-        newVotes.downvotes = currentVotes.downvotes + 1
-      }
-    }
+    setThreadDetail(updatedDetail);
+  } catch (error) {
+    console.error("Error in handleQuestionVote:", error);
+    toast.error("Failed to register your vote. Please try again.");
+  }
+};
 
-    setCommentVotes({
-      ...commentVotes,
-      [commentId]: newVotes,
+const handleCommentVote = (postId:number,commentId: number, type: "upvote" | "downvote") => {
+    if (!isLoggedIn) {
+      setShowLoginPopup(true);
+      return;
+    }
+    setCommentVotes(prev => {
+      const current = prev[commentId] || { upvotes: 0, downvotes: 0, userVote: null };
+      let { upvotes, downvotes, userVote } = current;
+      if (userVote === type) {
+        userVote = null;
+        if (type === "upvote") upvotes = Math.max(0, upvotes - 1);
+        else downvotes = Math.max(0, downvotes - 1);
+      } else if (userVote !== null) {
+        userVote = type;
+        if (type === "upvote") {
+          upvotes += 1;
+          downvotes = Math.max(0, downvotes - 1);
+        } else {
+          downvotes += 1;
+          upvotes = Math.max(0, upvotes - 1);
+        }
+      } else {
+        userVote = type;
+        if (type === "upvote") upvotes += 1;
+        else downvotes += 1;
+      }
+      return { ...prev, [commentId]: { upvotes, downvotes, userVote } };
+    });
+
+    // Call API (no await for instant UI)
+    voteThreadComment({
+      threadId: String(threadDetail?.threadId ?? ""),
+      postId,
+      commentId,
+      userId: uId,
+      username: userName,
+      type,
     })
-  }
-
-  const handleAnswerVote = (answerId: number, voteType: "up" | "down") => {
-    const currentVotes = answerVotes[answerId] || { upvotes: 0, downvotes: 0, userVote: null }
-    const newVotes = { ...currentVotes }
-
-    // If user already voted this way, remove the vote
-    if (currentVotes.userVote === voteType) {
-      newVotes.userVote = null
-      if (voteType === "up") {
-        newVotes.upvotes = Math.max(0, currentVotes.upvotes - 1)
-      } else {
-        newVotes.downvotes = Math.max(0, currentVotes.downvotes - 1)
-      }
-    }
-    // If user voted the opposite way, switch the vote
-    else if (currentVotes.userVote !== null) {
-      newVotes.userVote = voteType
-      if (voteType === "up") {
-        newVotes.upvotes = currentVotes.upvotes + 1
-        newVotes.downvotes = Math.max(0, currentVotes.downvotes - 1)
-      } else {
-        newVotes.downvotes = currentVotes.downvotes + 1
-        newVotes.upvotes = Math.max(0, currentVotes.upvotes - 1)
-      }
-    }
-    // If user hasn't voted yet, add the vote
-    else {
-      newVotes.userVote = voteType
-      if (voteType === "up") {
-        newVotes.upvotes = currentVotes.upvotes + 1
-      } else {
-        newVotes.downvotes = currentVotes.downvotes + 1
-      }
-    }
-
-    setAnswerVotes({
-      ...answerVotes,
-      [answerId]: newVotes,
+    .then(() => {
+      toast.success("Your vote has been registered!");
     })
-  }
+    .catch(() => toast("Failed to register your vote. Please try again."));
+  };
 
-  const handleAnswerCommentVote = (answerId: number, commentId: number, voteType: "up" | "down") => {
-    const key = `${answerId}-${commentId}`
-    const currentVotes = answerCommentVotes[key] || { upvotes: 0, downvotes: 0, userVote: null }
-    const newVotes = { ...currentVotes }
-
-    // If user already voted this way, remove the vote
-    if (currentVotes.userVote === voteType) {
-      newVotes.userVote = null
-      if (voteType === "up") {
-        newVotes.upvotes = Math.max(0, currentVotes.upvotes - 1)
-      } else {
-        newVotes.downvotes = Math.max(0, currentVotes.downvotes - 1)
-      }
-    }
-    // If user voted the opposite way, switch the vote
-    else if (currentVotes.userVote !== null) {
-      newVotes.userVote = voteType
-      if (voteType === "up") {
-        newVotes.upvotes = currentVotes.upvotes + 1
-        newVotes.downvotes = Math.max(0, currentVotes.downvotes - 1)
-      } else {
-        newVotes.downvotes = currentVotes.downvotes + 1
-        newVotes.upvotes = Math.max(0, currentVotes.upvotes - 1)
-      }
-    }
-    // If user hasn't voted yet, add the vote
-    else {
-      newVotes.userVote = voteType
-      if (voteType === "up") {
-        newVotes.upvotes = currentVotes.upvotes + 1
-      } else {
-        newVotes.downvotes = currentVotes.downvotes + 1
-      }
-    }
-
-    setAnswerCommentVotes({
-      ...answerCommentVotes,
-      [key]: newVotes,
-    })
-  }
-
+console.log(isLoggedIn, "isLoggedIn in PostDetailPage");
   const handleBookmark = () => {
     setIsBookmarked(!isBookmarked)
-    toast({
-      title: isBookmarked ? "Bookmark removed" : "Bookmark added",
-      description: isBookmarked ? "Post has been removed from your bookmarks" : "Post has been added to your bookmarks",
-    })
+    toast.success( "Post has been removed from your bookmarks")
   }
 
-  // const handleAddQuestionComment = () => {
-  //   if (!replyContent.trim()) return
 
-  //   const newComment = {
-  //     id: questionComments.length + 1,
-  //     author: {
-  //       name: "John Doe",
-  //       username: "JohnDoe_User",
-  //       avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face",
-  //       verified: false,
-  //       reputation: 4.2,
-  //     },
-  //     content: replyContent,
-  //     timestamp: "Just now",
-  //   }
-
-  //   setQuestionComments([...questionComments, newComment])
-  //   setReplyContent("")
-  //   setShowReplyEditor(false)
-
-  //   // Add initial vote state for the new comment
-  //   setCommentVotes({
-  //     ...commentVotes,
-  //     [newComment.id]: { upvotes: 0, downvotes: 0, userVote: null },
-  //   })
-
-  //   // Show toast notification
-  //   toast({
-  //     title: "Comment posted",
-  //     description: "Your comment has been posted successfully.",
-  //   })
-  // }
 
  const handleAddAnswer = async () => {
+  if (!isLoggedIn) {
+    setShowLoginPopup(true);
+    return;
+  }
   if (!answerContent.trim() || !threadDetail) return;
 
   try {
     // Call your API
     const response = await addThreadAnswer({
       postType: "reply",
-      uId: 2, // Replace with actual user id
-      uname: "JaneSmith", // Replace with actual username
+      uId, // Replace with actual user id
+      uname: userName, // Replace with actual username
       title: `Re: ${threadDetail.posts[0]?.title || "Thread"}`,
       content: answerContent,
       grpId: threadDetail.grpId,
@@ -588,99 +310,87 @@ export default function PostDetailPage() {
     });
 
     // Option 1: If API returns the new answer object:
-    setAnswers((prev) => [
-      ...prev,
-      {
-        ...response, // Make sure response matches your answer object shape
-        isAccepted: false,
-        comments: [],
-      },
-    ]);
+    // setAnswers((prev) => [
+    //   ...prev,
+    //   {
+    //     ...response, // Make sure response matches your answer object shape
+    //     isAccepted: false,
+    //     comments: [],
+    //   },
+    // ]);
 
 
     setAnswerContent("");
     setShowAnswerEditor(false);
 
-    toast({
-      title: "Answer posted",
-      description: "Your answer has been posted successfully.",
-    });
+    toast.success("Your answer has been posted successfully.");
   } catch (error) {
     console.error("Error posting answer:", error);
-    toast({
-      title: "Error",
-      description: "Failed to post answer. Please try again.",
-      variant: "destructive",
-    });
+    toast.error("Failed to post answer. Please try again.");
   }
 };
 
-  const handleAddAnswerComment = (answerId: number) => {
-    if (!answerCommentContent.trim()) return
+//  const handleAddAnswerComment = (answerId: number) => {
+//   if (!answerCommentContent.trim()) return;
 
-    const newComment = {
-      id: Date.now(),
-      author: {
-        name: "John Doe",
-        username: "JohnDoe_User",
-        avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face",
-        verified: false,
-      },
-      content: answerCommentContent,
-      timestamp: "Just now",
-    }
+//   const newComment = {
+//     id: Date.now(),
+//     author: {
+//       name: "John Doe",
+//       username: "JohnDoe_User",
+//       avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face",
+//       verified: false,
+//     },
+//     content: answerCommentContent,
+//     timestamp: "Just now",
+//   };
 
-    const updatedAnswers = answers.map((answer) => {
-      if (answer.id === answerId) {
-        return {
-          ...answer,
-          comments: [...(answer.comments || []), newComment],
-        }
-      }
-      return answer
-    })
+//   const updatedAnswers = answers.map((answer) => {
+//     if (answer.id === answerId) {
+//       return {
+//         ...answer,
+//         comments: [...(answer.comments || []), newComment],
+//       };
+//     }
+//     return answer;
+//   });
 
-    setAnswers(updatedAnswers)
-    setAnswerCommentContent("")
-    setReplyingToAnswerComment(null)
+//   setAnswers(updatedAnswers);
+//   setAnswerCommentContent("");
+//   setReplyingToAnswerComment(null);
 
-    // Add initial vote state for the new comment
-    setAnswerCommentVotes({
-      ...answerCommentVotes,
-      [`${answerId}-${newComment.id}`]: { upvotes: 0, downvotes: 0, userVote: null },
-    })
+//   // Add initial vote state for the new comment
+//   setAnswerCommentVotes({
+//     ...answerCommentVotes,
+//     [`${answerId}-${newComment.id}`]: { upvotes: 0, downvotes: 0, userVote: null },
+//   });
 
-    // Show toast notification
-    toast({
-      title: "Comment posted",
-      description: "Your comment has been posted successfully.",
-    })
-  }
+//   toast.success("Your comment has been posted successfully.");
+// };
 
   const handleShare = (platform?: string) => {
-    const shareText = `Check out this post by ${postData.author.name}: "${postData.title}"`
-    const shareUrl = `${window.location.origin}/groups/${groupId}/post/${postId}`
+  
+    const shareUrl = `${window.location.origin}/${groupsName}/${groupId}/${threadId}`
 
     if (platform === "copy") {
       navigator.clipboard.writeText(shareUrl)
-      toast({
-        title: "Link copied",
-        description: "Link has been copied to clipboard!",
-      })
+      toast.success("Link has been copied to clipboard!")
     } else if (platform === "twitter") {
       window.open(
-        `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`,
+        `https://twitter.com/intent/tweet?text=&url=${encodeURIComponent(shareUrl)}`,
         "_blank",
       )
     } else if (platform === "facebook") {
       window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, "_blank")
     } else if (platform === "linkedin") {
       window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`, "_blank")
-    } else if (platform === "email") {
-      window.open(`mailto:?subject=${encodeURIComponent(shareText)}&body=${encodeURIComponent(shareUrl)}`, "_blank")
-    } else if (platform === "whatsapp") {
-      window.open(`https://wa.me/?text=${encodeURIComponent(`${shareText} ${shareUrl}`)}`, "_blank")
-    } else if (platform === "print") {
+    } 
+    // else if (platform === "email") {
+    //   window.open(`mailto:?subject=${encodeURIComponent(shareText)}&body=${encodeURIComponent(shareUrl)}`, "_blank")
+    // } else if (platform === "whatsapp") {
+    //   window.open(`https://wa.me/?text=${encodeURIComponent(`${shareText} ${shareUrl}`)}`, "_blank")
+    // } 
+    else if (platform === "print") {
       window.print()
     } else {
       setShowShareOptions(true)
@@ -688,13 +398,13 @@ export default function PostDetailPage() {
     }
 
     // Update share count
-    setPostData({
-      ...postData,
-      engagement: {
-        ...postData.engagement,
-        shares: postData.engagement.shares + 1,
-      },
-    })
+    // setPostData({
+    //   ...postData,
+    //   engagement: {
+    //     ...postData.engagement,
+    //     shares: postData.engagement.shares + 1,
+    //   },
+    // })
   }
 
   const formatContent = (command: string, value?: string) => {
@@ -710,28 +420,18 @@ export default function PostDetailPage() {
 
   const handleToggleNotification = () => {
     setIsNotificationEnabled(!isNotificationEnabled)
-    toast({
-      title: isNotificationEnabled ? "Notifications disabled" : "✅ Notifications enabled",
-      description: isNotificationEnabled
-        ? "You'll no longer receive notifications for this post."
-        : "You'll now be notified of updates and replies to this post.",
-      duration: 4000,
-    })
+    toast.error( "You'll no longer receive notifications for this post.")
   }
+// for Accept answer
+  // const handleAcceptAnswer = (answerId: number) => {
+  //   const updatedAnswers = answers.map((answer) => ({
+  //     ...answer,
+  //     isAccepted: answer.id === answerId,
+  //   }))
+  //   setAnswers(updatedAnswers)
 
-  const handleAcceptAnswer = (answerId: number) => {
-    const updatedAnswers = answers.map((answer) => ({
-      ...answer,
-      isAccepted: answer.id === answerId,
-    }))
-    setAnswers(updatedAnswers)
-
-    toast({
-      title: "Answer accepted",
-      description: "You have marked this answer as accepted.",
-      duration: 4000,
-    })
-  }
+  //   toast.success("You have marked this answer as accepted.")
+  // }
    const handleUserClick = (username: string) => {
     const user = userProfiles[username as keyof typeof userProfiles]
     if (user) {
@@ -743,19 +443,86 @@ export default function PostDetailPage() {
     const newFollowingUsers = new Set(followingUsers)
     if (followingUsers.has(username)) {
       newFollowingUsers.delete(username)
-      toast({
-        title: "Unfollowed",
-        description: `You are no longer following ${userProfiles[username as keyof typeof userProfiles]?.fullName}`,
-      })
+      toast(`You are no longer following ${userProfiles[username as keyof typeof userProfiles]?.fullName}`,
+      )
     } else {
       newFollowingUsers.add(username)
-      toast({
-        title: "Follow request sent",
-        description: `Follow request sent to ${userProfiles[username as keyof typeof userProfiles]?.fullName}`,
-      })
+      toast(`Follow request sent to ${userProfiles[username as keyof typeof userProfiles]?.fullName}`)
     }
     setFollowingUsers(newFollowingUsers)
   }
+const handleAddComment = async ({
+  postId,
+  content,
+  isQuestion,
+}: {
+  postId: number;
+  content: string;
+  isQuestion: boolean;
+}) => {
+  if (!isLoggedIn) {
+    setShowLoginPopup(true);
+    return;
+  }
+  if (!content.trim() || !threadDetail) return;
+
+  try {
+    // Replace with actual user info in production
+    const userId = uId;
+    const username = userName;
+    const threadIdVal = threadDetail.threadId;
+
+    // Call API
+    const newComment = await addThreadComment({
+      threadId: threadIdVal,
+      postId,
+      userId,
+      username,
+      content,
+    });
+
+    toast.success("Your comment has been posted successfully.");
+
+    // Update local state so comment appears immediately
+    setThreadDetail((prev) => {
+      if (!prev) return prev;
+      const updatedPosts = prev.posts.map((post) => {
+        if (post.postId === postId) {
+          return {
+            ...post,
+            comments: [
+              ...(post.comments || []),
+              {
+                // Use returned comment or fallback to local
+                commentId: newComment?.commentId || Date.now(),
+                uId: userId,
+                uname: username,
+                content,
+                upvoteCnt: 0,
+                downvoteCnt: 0,
+                createdAt: new Date().toISOString(),
+                upvotes: [],
+                downvotes: [],
+              },
+            ],
+          };
+        }
+        return post;
+      });
+      return { ...prev, posts: updatedPosts };
+    });
+
+    if (isQuestion) {
+      setReplyContent("");
+      setShowReplyEditor(false);
+    } else {
+      setAnswerCommentContent("");
+      setReplyingToAnswerComment(null);
+    }
+  } catch (error) {
+    toast.error("Failed to post comment. Please try again.");
+  }
+};
 useEffect(() => {
   async function fetchThread() {
     try {
@@ -769,48 +536,61 @@ useEffect(() => {
   }
   if (threadId) fetchThread();
 }, [threadId]);
-const handleAddQuestionComment = async () => {
-  if (!replyContent.trim()) return;
-  if (!threadDetail) return;
+// const handleAddQuestionComment = async (postId:number) => {
+//   if (!replyContent.trim()) return;
+//   if (!threadDetail) return;
 
-  try {
-    // Replace with actual user info in production
-    const userId = 123;
-    const username = "SC";
-    const postId = threadDetail.posts[0]?.postId;
-    const threadId = threadDetail.threadId;
+//   try {
+//     // Replace with actual user info in production
+//     const userId = 123;
+//     const username = "SC";
+//     // const postId = threadDetail.posts[0]?.postId;
+//     const threadId = threadDetail.threadId;
 
-    await addThreadComment({
-      threadId,
-      postId,
-      userId,
-      username,
-      content: replyContent,
-    });
+//     await addThreadComment({
+//       threadId,
+//       postId,
+//       userId,
+//       username,
+//       content: replyContent,
+//     });
 
-    toast({
-      title: "Comment posted",
-      description: "Your comment has been posted successfully.",
-    });
+//     toast.success(
+//      "Your comment has been posted successfully.");
 
-    setReplyContent("");
-    setShowReplyEditor(false);
+//     setReplyContent("");
+//     setShowReplyEditor(false);
 
-    // Optionally, refresh comments by refetching thread details
-    // or append the new comment to your local state
-  } catch (error) {
-    toast({
-      title: "Error",
-      description: "Failed to post comment. Please try again.",
-      variant: "destructive",
-    });
-  }
-};
+//     // Optionally, refresh comments by refetching thread details
+//     // or append the new comment to your local state
+//   } catch (error) {
+//     toast.error("Failed to post comment. Please try again.");
+//   }
+// };
+function timeAgo(dateString: string) {
+  const date = new Date(dateString);
+  const now = new Date();
+  const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+  if (isNaN(seconds)) return ""; // Invalid date
+
+  if (seconds < 60) return "Just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes} min${minutes > 1 ? "s" : ""} ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} hour${hours > 1 ? "s" : ""} ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days} day${days > 1 ? "s" : ""} ago`;
+  const months = Math.floor(days / 30);
+  if (months < 12) return `${months} month${months > 1 ? "s" : ""} ago`;
+  const years = Math.floor(months / 12);
+  return `${years} year${years > 1 ? "s" : ""} ago`;
+}
   return (
     <AppLayout
       backLink={{
         href: `/${groupsName}/${groupId}`,
-        label: `Back to ${postData.groupInfo.name}`,
+        // label: `Back to ${postData.groupInfo.name}`,
         shortLabel: "Back to Group",
       }}
       searchPlaceholder="Search in group..."
@@ -837,7 +617,7 @@ const handleAddQuestionComment = async () => {
                     >
                       <Avatar className="h-10 w-10">
                         {/* <AvatarImage src={postData.author.avatar || "/placeholder.svg"} /> */}
-                        <AvatarFallback>{threadDetail.posts[0]?.uname}</AvatarFallback>
+                        <AvatarFallback>{threadDetail.posts[0]?.uname[0]}</AvatarFallback>
                       </Avatar>
                     </button>
                     <div className="flex-1 min-w-0">
@@ -863,10 +643,10 @@ const handleAddQuestionComment = async () => {
                           onClick={() => handleUserClick(threadDetail.posts[0]?.uname)}
                           className="hover:text-blue-600 transition-colors"
                         >
-                          @{threadDetail.posts[0]?.emailId}
+                          {threadDetail.posts[0]?.emailId}
                         </button>
                         <span>•</span>
-                        <span>{threadDetail.createdAt}</span>
+                        <span>{timeAgo(threadDetail.createdAt)}</span>
                         {/* <span>•</span>
                         <span>{postData.engagement.views} views</span> */}
                       </div>
@@ -923,31 +703,31 @@ const handleAddQuestionComment = async () => {
                 {/* Question Content */}
                 <div className="flex">
                   {/* Voting Column */}
-                  <div className="flex flex-col items-center mr-4">
-                    <button
-                      onClick={() => handleQuestionVote("up")}
-                      className={`flex items-center justify-center h-10 w-10 rounded-md transition-colors ${
-                        questionVotes.userVote === "up"
-                          ? "bg-green-100 text-green-700"
-                          : "text-gray-500 hover:bg-gray-100"
-                      }`}
-                      aria-label="Upvote question"
-                    >
-                      <ChevronUp className="h-6 w-6" />
-                    </button>
-                    <span className="text-lg font-bold my-1">{threadDetail.posts[0]?.upvoteCnt - threadDetail.posts[0]?.downvoteCnt}</span>
-                    <button
-                      onClick={() => handleQuestionVote("down")}
-                      className={`flex items-center justify-center h-10 w-10 rounded-md transition-colors ${
-                        questionVotes.userVote === "down"
-                          ? "bg-red-100 text-red-700"
-                          : "text-gray-500 hover:bg-gray-100"
-                      }`}
-                      aria-label="Downvote question"
-                    >
-                      <ChevronDown className="h-6 w-6" />
-                    </button>
-                  </div>
+                <div className="flex flex-col items-center mr-4">
+  <button
+    onClick={() =>{
+    if (!isLoggedIn) {
+      setShowLoginPopup(true);
+      return;
+    } handleQuestionVote(threadDetail.posts[0]?.postId,"upvote")}}
+    className="flex items-center justify-center h-10 w-10 rounded-md transition-colors"
+  >
+    <ChevronUp className="h-6 w-6" />
+  </button>
+  <span className="text-lg font-bold my-1">
+    {(threadDetail.posts[0]?.upvoteCnt || 0) - (threadDetail.posts[0]?.downvoteCnt || 0)}
+  </span>
+  <button
+    onClick={() =>{
+    if (!isLoggedIn) {
+      setShowLoginPopup(true);
+      return;
+    } handleQuestionVote(threadDetail.posts[0]?.postId,"downvote")}}
+    className="flex items-center justify-center h-10 w-10 rounded-md transition-colors"
+  >
+    <ChevronDown className="h-6 w-6" />
+  </button>
+</div>
 
                   {/* Question Content */}
                   <div className="flex-1">
@@ -983,7 +763,11 @@ const handleAddQuestionComment = async () => {
                         Share
                       </Button>
                       <Button
-                        onClick={() => setShowReplyEditor(!showReplyEditor)}
+                        onClick={() => {
+    if (!isLoggedIn) {
+      setShowLoginPopup(true);
+      return;
+    }setShowReplyEditor(!showReplyEditor)}}
                         variant="outline"
                         size="sm"
                         className="flex items-center gap-2 text-gray-600"
@@ -992,10 +776,14 @@ const handleAddQuestionComment = async () => {
                         Add Comment
                       </Button>
                         <Button
-                    onClick={() => setShowAnswerEditor(!showAnswerEditor)}
+                    onClick={() => {
+    if (!isLoggedIn) {
+      setShowLoginPopup(true);
+      return;
+    }setShowAnswerEditor(!showAnswerEditor)}}
                     className="bg-blue-600 hover:bg-blue-700 ml-auto"
                   >
-                    Post Your Answer
+                    Post Your Replay
                   </Button>
                     </div>
                     
@@ -1092,7 +880,7 @@ const handleAddQuestionComment = async () => {
                 </div>
 
                 {/* Question Comments */}
-                {(questionComments.length > 0 || showReplyEditor) && (
+                {(threadDetail.posts[0].comments.length > 0 || showReplyEditor) && (
                   <div className="mt-2 pt-2 ">
                     {/* Add Comment Editor */}
                     {showReplyEditor && (
@@ -1124,8 +912,15 @@ const handleAddQuestionComment = async () => {
                               >
                                 Cancel
                               </Button>
-                              <Button onClick={handleAddQuestionComment} className="bg-blue-600 hover:bg-blue-700">
-                                Add Comment
+                              <Button 
+                               onClick={() =>
+    handleAddComment({
+      postId: threadDetail.posts[0].postId,
+      content: replyContent,
+      isQuestion: true,
+    })
+  } className="bg-blue-600 hover:bg-blue-700">
+                                Add Comment!
                               </Button>
                             </div>
                           </div>
@@ -1141,27 +936,26 @@ const handleAddQuestionComment = async () => {
                           <div key={comment.commentId} className="flex items-start gap-2 text-sm">
                             <div className="flex flex-col items-center mr-1">
                               <button
-                                onClick={() => handleCommentVote(comment.id, "up")}
-                                className={`flex justify-center h-5 w-6 rounded-md transition-colors ${
-                                  commentVotes[comment.id]?.userVote === "up"
-                                    ? "bg-green-100 text-green-700"
-                                    : "text-gray-400 hover:bg-gray-100"
-                                }`}
-                                aria-label="Upvote comment"
+                                onClick={() => {
+    if (!isLoggedIn) {
+      setShowLoginPopup(true);
+      return;
+    }handleCommentVote(threadDetail.posts[0].postId,comment.commentId, "upvote")}}
+                                className="flex justify-center h-5 w-6 rounded-md transition-colors"
                               >
                                 <ChevronUp className="h-4 w-4" />
                               </button>
                               <span className="text-xs font-medium text-gray-600">
-                                {(commentVotes[comment.id]?.upvotes || 0) - (commentVotes[comment.id]?.downvotes || 0)}
-                              </span>
+                                {(commentVotes[comment.commentId]?.upvotes ?? comment.upvoteCnt ?? 0) -
+   (commentVotes[comment.commentId]?.downvotes ?? comment.downvoteCnt ?? 0)}
+</span>
                               <button
-                                onClick={() => handleCommentVote(comment.id, "down")}
-                                className={`flex justify-center h-5 w-6 rounded-md transition-colors ${
-                                  commentVotes[comment.id]?.userVote === "down"
-                                    ? "bg-red-100 text-red-700"
-                                    : "text-gray-400 hover:bg-gray-100"
-                                }`}
-                                aria-label="Downvote comment"
+                                onClick={() => {
+    if (!isLoggedIn) {
+      setShowLoginPopup(true);
+      return;
+    }handleCommentVote(threadDetail.posts[0].postId,comment.commentId, "downvote")}}
+                                className="flex justify-center h-5 w-6 rounded-md transition-colors"
                               >
                                 <ChevronDown className="h-4 w-4" />
                               </button>
@@ -1173,9 +967,9 @@ const handleAddQuestionComment = async () => {
                                   <AvatarFallback>{comment.uname[0]}</AvatarFallback>
                                 </Avatar>
                                 <span className="font-medium text-gray-700">{comment.uname}</span>
-                                <span className="text-gray-500">{comment.createdAt}</span>
+                                <span className="text-gray-500">{timeAgo(comment.createdAt)}</span>
                               </div>
-                              <p className="text-gray-700">{comment.content}</p>
+                              <p className="text-gray-700" dangerouslySetInnerHTML={{ __html: comment.content }}></p>
                             </div>
                           </div>
                         ))}
@@ -1186,7 +980,9 @@ const handleAddQuestionComment = async () => {
               </div>
 
               {/* Separator between Question and Answers */}
-              <Separator className="my-6 mt-2 mb-3" />
+              {threadDetail.posts.some(post => post.postType === "reply") && (
+  <Separator className="my-6 mt-2 mb-3" />
+)}
 
               {/* Answers Section */}
               <div>
@@ -1194,7 +990,7 @@ const handleAddQuestionComment = async () => {
                {threadDetail.posts.some(post => post.postType === "reply") && (
   <div className="flex items-center justify-between mb-4">
     <h2 className="text-xl font-semibold text-gray-900">
-      {threadDetail.posts.filter(post => post.postType === "reply").length} Answers
+      {threadDetail.posts.filter(post => post.postType === "reply").length} Replays
     </h2>
   </div>
 )}
@@ -1204,12 +1000,7 @@ const handleAddQuestionComment = async () => {
                 <div className="space-y-6">
                   {/* Sort answers to show accepted answer first */}
                   
-                  {/* {answers
-                    .sort((a, b) => {
-                      if (a.isAccepted && !b.isAccepted) return -1
-                      if (!a.isAccepted && b.isAccepted) return 1
-                      return 0
-                    }) */}
+                 
                      {threadDetail.posts
       .filter((post) => post.postType === "reply")
                     .map((answer) => (
@@ -1221,27 +1012,26 @@ const handleAddQuestionComment = async () => {
                           {/* Voting Column */}
                           <div className="flex flex-col items-center mr-4">
                             <button
-                              onClick={() => handleAnswerVote(answer.postId, "up")}
-                              className={`flex items-center justify-center h-10 w-10 rounded-md transition-colors ${
-                                answerVotes[answer.postId]?.userVote === "up"
-                                  ? "bg-green-100 text-green-700"
-                                  : "text-gray-500 hover:bg-gray-100"
-                              }`}
-                              aria-label="Upvote answer"
+                              onClick={() => {
+    if (!isLoggedIn) {
+      setShowLoginPopup(true);
+      return;
+    }handleQuestionVote(answer.postId, "upvote")}}
+                              className="flex items-center justify-center h-10 w-10 rounded-md transition-colors"
                             >
                               <ChevronUp className="h-6 w-6" />
                             </button>
+                           
                             <span className="text-lg font-bold my-1">
-                              {(answerVotes[answer.postId]?.upvotes || 0) - (answerVotes[answer.postId]?.downvotes || 0)}
-                            </span>
+                             
+                              {(answer.upvoteCnt || 0) - (answer.downvoteCnt || 0)}    </span>
                             <button
-                              onClick={() => handleAnswerVote(answer.postId, "down")}
-                              className={`flex items-center justify-center h-10 w-10 rounded-md transition-colors ${
-                                answerVotes[answer.postId]?.userVote === "down"
-                                  ? "bg-red-100 text-red-700"
-                                  : "text-gray-500 hover:bg-gray-100"
-                              }`}
-                              aria-label="Downvote answer"
+                              onClick={() => {
+    if (!isLoggedIn) {
+      setShowLoginPopup(true);
+      return;
+    }handleQuestionVote(answer.postId, "downvote")}}
+                              className="flex items-center justify-center h-10 w-10 rounded-md transition-colors "
                             >
                               <ChevronDown className="h-6 w-6" />
                             </button>
@@ -1274,7 +1064,7 @@ const handleAddQuestionComment = async () => {
 
                             {/* Answer Author */}
                             <div className="flex items-center justify-between mt-2 mb-2">
-                              <div className="text-sm text-gray-500">answered {answer.createdAt}</div>
+                              <div className="text-sm text-gray-500">answered {timeAgo(answer.createdAt)}</div>
                               <div className="flex items-center gap-3 bg-blue-50 p-2 rounded-md">
                                 <Avatar className="h-8 w-8 flex-shrink-0">
                                   {/* <AvatarImage src={answer.author.avatar || "/placeholder.svg"} /> */}
@@ -1293,13 +1083,17 @@ const handleAddQuestionComment = async () => {
                             {/* Answer Actions */}
                             <div className="flex items-center gap-4">
                               <Button
-                                onClick={() => setReplyingToAnswerComment({ answerId: answer.postId, commentId: null })}
+                                onClick={() => {
+    if (!isLoggedIn) {
+      setShowLoginPopup(true);
+      return;
+    }setReplyingToAnswerComment({ answerId: answer.postId, commentId: null })}}
                                 variant="outline"
                                 size="sm"
                                 className="flex items-center gap-2 text-gray-600"
                               >
                                 <MessageSquare className="h-4 w-4" />
-                                Add Comment
+                                Add Comment 
                               </Button>
                               <Button
                                 onClick={() => handleShare()}
@@ -1340,8 +1134,15 @@ const handleAddQuestionComment = async () => {
                                         >
                                           Cancel
                                         </Button>
+                                        
                                         <Button
-                                          onClick={() => handleAddAnswerComment(answer.postId)}
+                                           onClick={() =>
+    handleAddComment({
+      postId: answer.postId,
+      content: answerCommentContent,
+      isQuestion: false,
+    })
+  }
                                           className="bg-blue-600 hover:bg-blue-700"
                                         >
                                           Add Comment
@@ -1357,47 +1158,47 @@ const handleAddQuestionComment = async () => {
                               <div className="mt-4 border-t border-gray-200 pt-4">
                                 <h3 className="text-sm font-medium text-gray-700 mb-2">Comments</h3>
                                 <div className="space-y-3">
-                                  {answer.comments.map((comment) => (
-                                    <div key={comment.id} className="flex items-start gap-2 text-sm">
-                                      <div className="flex flex-col items-center mr-1">
+                                {answer.comments.map((comment) => (
+  <div key={`${answer.postId}-${comment.commentId}`} className="flex items-start gap-2 text-sm">
+    <div className="flex flex-col items-center mr-1">
                                         <button
-                                          onClick={() => handleAnswerCommentVote(answer.postId, comment.id, "up")}
-                                          className={`flex items-center justify-center h-6 w-6 rounded-md transition-colors ${
-                                            answerCommentVotes[`${answer.postId}-${comment.id}`]?.userVote === "up"
-                                              ? "bg-green-100 text-green-700"
-                                              : "text-gray-400 hover:bg-gray-100"
-                                          }`}
-                                          aria-label="Upvote comment"
+                                          onClick={() => {
+    if (!isLoggedIn) {
+      setShowLoginPopup(true);
+      return;
+    }handleCommentVote(answer.postId, comment.commentId, "upvote")}}
+                                          className="flex items-center justify-center h-6 w-6 rounded-md transition-colors"
                                         >
                                           <ChevronUp className="h-4 w-4" />
                                         </button>
                                         <span className="text-xs font-medium text-gray-600 my-0.5">
-                                          {(answerCommentVotes[`${answer.postId}-${comment.id}`]?.upvotes || 0) -
-                                            (answerCommentVotes[`${answer.postId}-${comment.id}`]?.downvotes || 0)}
-                                        </span>
+                                          {(commentVotes[comment.commentId]?.upvotes ?? comment.upvoteCnt ?? 0) -
+   (commentVotes[comment.commentId]?.downvotes ?? comment.downvoteCnt ?? 0)}
+</span>
                                         <button
-                                          onClick={() => handleAnswerCommentVote(answer.postId, comment.id, "down")}
-                                          className={`flex items-center justify-center h-6 w-6 rounded-md transition-colors ${
-                                            answerCommentVotes[`${answer.postId}-${comment.id}`]?.userVote === "down"
-                                              ? "bg-red-100 text-red-700"
-                                              : "text-gray-400 hover:bg-gray-100"
-                                          }`}
-                                          aria-label="Downvote comment"
+                                          onClick={() => {
+    if (!isLoggedIn) {
+      setShowLoginPopup(true);
+      return;
+    }handleCommentVote(answer.postId, comment.commentId, "downvote")}}
+                                          className="flex items-center justify-center h-6 w-6 rounded-md transition-colors"
                                         >
                                           <ChevronDown className="h-4 w-4" />
                                         </button>
                                       </div>
-                                      <div className="flex-1">
-                                        <div className="flex items-center gap-2 mb-1">
-                                          <Avatar className="h-5 w-5 flex-shrink-0">
-                                            <AvatarImage src={comment.author.avatar || "/placeholder.svg"} />
-                                            <AvatarFallback>{comment.author.name[0]}</AvatarFallback>
-                                          </Avatar>
-                                          <span className="font-medium text-gray-700">{comment.author.name}</span>
-                                          <span className="text-gray-500">{comment.timestamp}</span>
-                                        </div>
-                                        <p className="text-gray-700">{comment.content}</p>
-                                      </div>
+                                       <div className="flex-1">
+      <div className="flex items-center gap-2 mb-1">
+        <Avatar className="h-5 w-5 flex-shrink-0">
+          <AvatarImage src={comment.author?.avatar || "/placeholder.svg"} />
+          <AvatarFallback>
+            {comment.author?.name ? comment.author.name[0] : "?"}
+          </AvatarFallback>
+        </Avatar>
+        <span className="font-medium text-gray-700">{comment.author?.name || comment.uname || "Unknown"}</span>
+        <span className="text-gray-500">{timeAgo(comment.timestamp || comment.createdAt)}</span>
+      </div>
+      <p className="text-gray-700" dangerouslySetInnerHTML={{ __html: comment.content }}></p>
+    </div>
                                     </div>
                                   ))}
                                 </div>
@@ -1429,7 +1230,7 @@ const handleAddQuestionComment = async () => {
                 <div className="mb-4">
                   <div className="flex items-center border rounded-md overflow-hidden">
                     <div className="bg-gray-100 px-3 py-2 text-sm text-gray-500 truncate flex-1">
-                      {`${window.location.origin}/groups/${groupId}/post/${postId}`}
+                      {`${window.location.origin}/${groupsName}/${groupId}/${threadId}`}
                     </div>
                     <Button
                       variant="ghost"
@@ -1622,6 +1423,13 @@ const handleAddQuestionComment = async () => {
           )}
         </div>
       </div>
+        {/* Login Popup */}
+          <LoginPopup
+  isOpen={showLoginPopup}
+  onClose={() => setShowLoginPopup(false)}
+  actionMessage=""
+ onLoginSuccess={() => setShowLoginPopup(false)}
+/>
     </AppLayout>
   )
 }

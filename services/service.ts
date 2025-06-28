@@ -12,14 +12,14 @@ export const addQuestion = async (
       `https://mineralview-community.mineralview.com/api/thread/post`,
       payload,
     );
-    console.log('Response from addQuestion:', response);
+   
     if (response.status === 201) {
       return response.data;
     } else {
       throw new Error('post not created');
     }
   } catch (error) {
-    console.log('Error in addQuestion:', error);
+   
     throw new Error(String(error) || 'An error occurred while adding the question');
   }
 };
@@ -33,14 +33,14 @@ Promise<PublicGroupInterface[]> => {
       `https://mineralview-community.mineralview.com/api/getgrouplisting`,
      
     );
-    console.log('Response from addQuestion:', response);
+   
     if (response.status === 200) {
       return response.data;
     } else {
       throw new Error('Failed to fetch public groups');
     }
   } catch (error) {
-    console.log('', error);
+   
     throw new Error(String(error) || 'An error occurred while fetching public groups');
   }
 };
@@ -54,14 +54,14 @@ export const getGroupThreads = async (
     const response = await axios.get(
       `https://mineralview-community.mineralview.com/api/getgroupthreads?grpId=${grpId}&pageno=${pageno}&noofthreads=${noofthreads}`
     )
-    console.log('Response from getGroupThreads:', response)
+   
     if (response.status === 200) {
       return response.data
     } else {
       throw new Error('Failed to fetch group threads')
     }
   } catch (error) {
-    console.log('Error in getGroupThreads:', error)
+    
     throw new Error(String(error) || 'An error occurred while fetching group threads')
   }
 }
@@ -78,3 +78,9 @@ export const getThreadDetails = async (
     throw new Error('Failed to fetch thread details');
   }
 }
+// export recent activity
+// This function fetches recent activity from the community API
+export const getRecentActivity = async () => {
+  const response = await axios.get("https://mineralview-community.mineralview.com/api/recentactivity");
+  return response.data;
+};

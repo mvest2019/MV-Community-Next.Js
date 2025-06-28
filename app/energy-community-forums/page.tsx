@@ -56,7 +56,7 @@ export default function PublicGroupsPage() {
     async function fetchGroups() {
       setLoading(true)
       const response = await getPublicGroups()
-      console.log("API Response:", response)
+     
       if (Array.isArray(response)) {
         setPublicGroups(response)
       } else {
@@ -108,8 +108,7 @@ export default function PublicGroupsPage() {
     await new Promise((resolve) => setTimeout(resolve, 1500))
 
     // Handle invitation sending logic here
-    console.log("Sending invitation:", inviteData, "for group:", selectedGroupForInvite?.name)
-
+   
     // Reset form and show success
     setInviteData({
       email: "",

@@ -89,3 +89,74 @@ export interface ThreadPostInterface {
   downvotes: any[]
   comments: any[]
 }
+// group threads details response interface
+export interface GroupThreadDetailsResponseInterface {
+  threadId: string
+  postQuestion: string
+  lastReply: string
+  lastActivity: string
+  userImage: string
+  userId: number
+  userName: string
+  emailId?: string
+  NofOfReplies: number
+  NofOfVotes: number
+  NofOfComments: number
+  _id: string
+}
+// login response interface
+export interface LoginResponseInterface {
+  status_code: number
+  data: Data
+  error: string
+}
+// data interface for login response  
+export interface Data {
+  member_id: number
+  member_type: string
+  f_name: string
+  l_name: string
+  email_id: string
+  mailing_st_address: string
+  city: string
+  state_master_id: any
+  zip_code: string
+  phone_number: string
+  notification_phonenumber: any
+  notification_email: any
+  preference_optioncode: any
+  membership_planid: any
+  membership_expirydate: any
+  registration_date: string
+  email_verified: boolean
+  email_verification_code: string
+  email_verification_time: string
+  reset_password_token: any
+  reset_password_validity: any
+  user_name: string
+  tag_line: string
+  background_image: string
+  otp_verification_code: any
+  ispresentation: any
+  subscriptionid: number
+  subscriptionstatus: string
+  issubscriptionpaid: boolean
+  membership_status: any
+  referal_code: any
+  refered_code: any
+  email_text: any
+  login_type: any
+  login_json: any
+  isfirstime: boolean
+  isguide: boolean
+  isautodebit: boolean
+  profile_pic: string
+  subscriptionname: string
+  currentsubscriptionid: string
+  currentsubscriptionstatus: string
+  subscriptionstartdate: string
+  subscriptionenddat: string
+  duration: any
+  isTrialPeriod: boolean
+  token: string
+}

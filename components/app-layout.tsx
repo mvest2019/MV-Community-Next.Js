@@ -26,6 +26,7 @@ interface AppLayoutProps {
 export function AppLayout({ children, pageTitle, searchPlaceholder = "Search..." }: AppLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const { user, isLoggedIn, logout } = useAuth()
+  
 
   return (
     <div className="flex h-screen bg-gray-50 font-montserrat">
@@ -114,7 +115,9 @@ export function AppLayout({ children, pageTitle, searchPlaceholder = "Search..."
                     </AvatarFallback>
                   </Avatar>
                   <span className="text-sm font-medium text-white hidden sm:block">
-                    {isLoggedIn ? user?.name || "Profile" : "Guest"}
+                    {isLoggedIn
+    ? `${user?.f_name ?? ""} ${user?.l_name ?? ""}`.trim() || "Profile"
+    : "Guest"}
                   </span>
                 </div>
               </DropdownMenuTrigger>

@@ -31,6 +31,7 @@ import { Bold, Italic, Underline, List, ListOrdered, Link2 } from "lucide-react"
 import { addQuestion, getPublicGroups } from "@/services/service"
 import { useAuthAction } from "@/hooks/use-auth-action"
 import { LoginPopup } from "./login-popup"
+import { useAuth } from "@/hooks/use-auth"
 
 interface SidebarProps {
   className?: string
@@ -49,6 +50,14 @@ export function Sidebar({ className }: SidebarProps) {
     hashtags: [] as string[],
     currentTag: "",
   })
+  const { isLoggedIn } = useAuth(); 
+  const userStr = typeof window !== "undefined" ? localStorage.getItem("user") : null;
+const user = userStr ? JSON.parse(userStr) : null;
+
+// Now you can access:
+const uId = user?.member_id;
+const uEmailId = user?.email_id;
+const userName = user ? `${user.f_name} ${user.l_name}` : "";
 
   const [newGroupData, setNewGroupData] = useState({
     name: "",
@@ -244,9 +253,9 @@ const [publicGroups, setPublicGroups] = useState<{ grpId: number; grpName: strin
     try {
      const payload = {
       postType: "question",
-      uId: 6, // Replace with actual user ID from context
-      uname: "John Doe", // Replace with actual username from context
-      emailId: "johndoe2@gmail.com", // Replace with actual user email from context
+      uId: uId, // Replace with actual user ID from context
+      uname: userName, // Replace with actual username from context
+      emailId: uEmailId, // Replace with actual user email from context
       title: questionData.title,
       content: editorContent,
       grpId: questionData.grpId, // Replace with actual group ID
@@ -255,7 +264,7 @@ const [publicGroups, setPublicGroups] = useState<{ grpId: number; grpName: strin
     }
 
       const response = await addQuestion(payload) 
- console.log("Question submitted successfully:", response)
+ 
       if (response) {
         // console.log("Question submitted successfully:", payload)
 
@@ -329,7 +338,7 @@ toast.message("Your question has been posted successfully."
   }
 
   const handleCreateGroup = () => {
-    console.log("Creating private group:", newGroupData)
+  
     setCreateGroupOpen(false)
     setNewGroupData({
       name: "",

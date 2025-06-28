@@ -60,3 +60,50 @@ export const addThreadAnswer = async ({
   );
   return response.data;
 };
+// voteThreadPost function to vote on a post in a thread
+
+export const voteThreadPost = async ({
+  threadId,
+  postId,
+  type, // "up" or "down"
+  uId,
+  uname,
+}: {
+  threadId: string;
+  postId: number;
+  type: "upvote" | "downvote";
+    uId: number;
+  uname: string;
+}) => {
+  const response = await axios.post(
+    "https://mineralview-community.mineralview.com/api/thread/post/vote",
+    { threadId, postId, type, uId, uname }
+  );
+  return response.data;
+};
+// voteThreadComment function to vote on a comment in a thread
+export const voteThreadComment = async ({
+  threadId,
+  postId,
+  commentId,
+  userId,
+  username,
+  type, // "upvote" | "downvote"
+}: {
+  threadId: string;
+  postId: number;
+  commentId: number;
+  userId: number;
+  username: string;
+  type: "upvote" | "downvote";
+}) => {
+  const response = await axios.post("https://mineralview-community.mineralview.com/api/thread/post/comment/vote", {
+    threadId,
+    postId,
+    commentId,
+    userId,
+    username,
+    type,
+  });
+  return response.data;
+};

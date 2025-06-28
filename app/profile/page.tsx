@@ -103,7 +103,7 @@ export default function ProfilePage() {
 
   const handleSavePost = (postId: number) => {
     // Here you would typically save to a database
-    console.log(`Saving post ${postId} with content:`, editedContent)
+   
     setEditingPost(null)
     setEditedContent("")
   }
