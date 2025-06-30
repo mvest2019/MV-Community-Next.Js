@@ -46,7 +46,7 @@ import { AppLayout } from "@/components/app-layout"
 import { useToast } from "@/components/ui/use-toast"
 import { getThreadDetails } from "@/services/service"
 import { GroupThreadDetailsInterface } from "@/types/community-types"
-import { addThreadComment, voteThreadPost } from "@/services/threadId-service"
+import { acceptThreadAnswer, addThreadComment, voteThreadPost } from "@/services/threadId-service"
 import { addThreadAnswer } from "@/services/threadId-service";
 import { voteThreadComment } from "@/services/threadId-service";
 import { toast } from "sonner"
@@ -326,7 +326,7 @@ console.log(isLoggedIn, "isLoggedIn in PostDetailPage");
       return {
         ...prev,
         posts: [
-          ...prev.posts,
+          // ...prev.posts,
           {
             ...response, // Make sure response matches your answer object shape
             postType: "reply",
@@ -337,6 +337,7 @@ console.log(isLoggedIn, "isLoggedIn in PostDetailPage");
             uname: userName,
             uId: uId,
           },
+          ...prev.posts,
         ],
       };
     });
@@ -623,6 +624,43 @@ function timeAgo(dateString: string) {
   const years = Math.floor(months / 12);
   return `${years} year${years > 1 ? "s" : ""} ago`;
 }
+const handleAcceptAnswer = async (postId: number) => {
+  if (!threadDetail) return;
+  try {
+    await acceptThreadAnswer({
+      threadId: threadDetail.threadId,
+      postId,
+      isAnswer: 1,
+    });
+    toast.success("Answer marked as accepted!");
+
+    // Update UI immediately
+    setThreadDetail((prev) => {
+      if (!prev) return prev;
+      // Update isAnswer for all replies
+      const updatedPosts = prev.posts.map((p) =>
+        p.postType === "reply"
+          ? { ...p, isAnswer: p.postId === postId ? 1 : 0 }
+          : p
+      );
+      // Move accepted answer to top of replies
+      const replies = updatedPosts.filter((p) => p.postType === "reply");
+      const others = updatedPosts.filter((p) => p.postType !== "reply");
+      const accepted = replies.find((p) => p.isAnswer === 1);
+      const restReplies = replies.filter((p) => p.isAnswer !== 1);
+      return {
+        ...prev,
+        posts: [
+          ...others,
+          ...(accepted ? [accepted] : []),
+          ...restReplies,
+        ],
+      };
+    });
+  } catch (error) {
+    toast.error("Failed to accept answer. Please try again.");
+  }
+};
   return (
     <AppLayout
       backLink={{
@@ -676,13 +714,13 @@ function timeAgo(dateString: string) {
                         </div> */}
                       </div>
                       <div className="flex flex-wrap items-center gap-2 text-sm text-gray-500">
-                        <button
+                        {/* <button
                           onClick={() => handleUserClick(threadDetail.posts[0]?.uname)}
                           className="hover:text-blue-600 transition-colors"
                         >
                           {threadDetail.posts[0]?.emailId}
                         </button>
-                        <span>•</span>
+                        <span>•</span> */}
                         <span>{timeAgo(threadDetail.createdAt)}</span>
                         {/* <span>•</span>
                         <span>{postData.engagement.views} views</span> */}
@@ -881,16 +919,24 @@ function timeAgo(dateString: string) {
                       </div>
 
                       {/* HTML Editor */}
-                      <div
-                        ref={answerEditorRef}
-                        contentEditable
-                        className="min-h-[200px] p-3 border border-gray-300 rounded-b-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
-                        style={{ borderTop: "none" }}
-                        onInput={(e) => setAnswerContent(e.currentTarget.innerHTML)}
-                        suppressContentEditableWarning={true}
-                      >
-                        <p>Type your reply here...</p>
-                      </div>
+                      <div className="relative">
+  <div
+    ref={answerEditorRef}
+    contentEditable
+    className="min-h-[200px] p-3 border border-gray-300 rounded-b-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+    style={{ borderTop: "none" }}
+    onInput={(e) => setAnswerContent(e.currentTarget.innerHTML)}
+    suppressContentEditableWarning={true}
+  />
+  {(!answerContent || answerContent === "<br>") && (
+    <span
+      className="absolute left-4 top-4 text-gray-400 pointer-events-none select-none"
+      style={{ zIndex: 1 }}
+    >
+      Type your reply here...
+    </span>
+  )}
+</div>
                     </div>
 
                     <div className="flex justify-end gap-2">
@@ -1041,10 +1087,10 @@ function timeAgo(dateString: string) {
                      {threadDetail.posts
       .filter((post) => post.postType === "reply")
                     .map((answer) => (
-                      <div
-                        key={answer.postId}
-                        className={`p-4 border rounded-lg }`}
-                      >
+                     <div
+  key={answer.postId}
+  className={`p-4 border rounded-lg ${answer.isAnswer === 1 ? "bg-green-50 border-green-300" : ""}`}
+>
                         <div className="flex">
                           {/* Voting Column */}
                           <div className="flex flex-col items-center mr-4">
@@ -1072,23 +1118,16 @@ function timeAgo(dateString: string) {
                             >
                               <ChevronDown className="h-6 w-6" />
                             </button>
-                            {/* {answer.isAccepted && (
-                              <div
-                                className="flex items-center justify-center h-10 w-10 rounded-md mt-2 bg-green-100 text-green-700"
-                                title="Accepted Answer"
-                              >
-                                <Check className="h-6 w-6" />
-                              </div>
-                            )}
-                            {!answer.isAccepted && postData.author.username === "SarahM_Landowner" && (
-                              <button
-                                onClick={() => handleAcceptAnswer(answer.id)}
-                                className="flex items-center justify-center h-10 w-10 rounded-md mt-2 text-gray-400 hover:text-green-600 hover:bg-green-50"
-                                title="Accept this answer"
-                              >
-                                <Check className="h-6 w-6" />
-                              </button>
-                            )} */}
+            {/* // Show accept button only if not accepted */}
+{answer.isAnswer !== 1 && threadDetail.posts[0]?.uname === userName && (
+  <button
+    onClick={() => handleAcceptAnswer(answer.postId)}
+    className="flex items-center justify-center h-10 w-10 rounded-md mt-2 text-gray-400 hover:text-green-600 hover:bg-green-50"
+    title="Accept this answer"
+  >
+    <Check className="h-6 w-6" />
+  </button>
+)}
                           </div>
 
                           {/* Answer Content */}

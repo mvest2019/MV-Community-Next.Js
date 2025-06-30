@@ -88,6 +88,7 @@ export interface ThreadPostInterface {
   upvotes: any[]
   downvotes: any[]
   comments: any[]
+  isAnswer?: number // 1 for accepted, 0 for not accepted
 }
 // group threads details response interface
 export interface GroupThreadDetailsResponseInterface {

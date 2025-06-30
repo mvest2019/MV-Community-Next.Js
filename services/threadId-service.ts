@@ -107,3 +107,27 @@ export const voteThreadComment = async ({
   });
   return response.data;
 };
+// acceptThreadAnswer function to accept an answer in a thread
+export async function acceptThreadAnswer({
+  threadId,
+  postId,
+  isAnswer = 1, // Default to 1 for accepted answer
+}: {
+  threadId: number | string;
+  postId: number | string;
+  isAnswer?: number; // 1 for accepted, 0 for not accepted
+}) {
+  const response = await axios.post(
+    "https://mineralview-community.mineralview.com/api/updateIsAnswerStatus",
+    {
+      threadId,
+      postId,
+      isAnswer, // 1 for accepted answer, 0 for not accepted
+    }
+  );
+  if (response.status === 200) {
+    return response.data;
+  } else {
+    throw new Error("Failed to accept answer");
+  }
+}

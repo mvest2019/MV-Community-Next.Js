@@ -189,7 +189,11 @@ useEffect(() => {
     setCurrentPage(pageNumber);
     postsTopRef.current?.scrollIntoView({ behavior: "smooth" });
   };
-
+function formatUrlTitle(url: string) {
+  return url
+    .replace(/-/g, " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
   return (
     <AppLayout
       backLink={{
@@ -200,7 +204,7 @@ useEffect(() => {
       searchPlaceholder="Search in group..."
     >
       {/* Group Header */}
-      <div className="relative h-48 bg-gradient-to-br from-blue-500 to-purple-600 overflow-hidden">
+      <div className="relative h-32 bg-gradient-to-br from-blue-500 to-purple-600 overflow-hidden">
         <Image src={groupData.coverImage || "/placeholder.svg"} alt={groupData.name} fill className="object-cover" />
         <div className="absolute inset-0 bg-black/40"></div>
         <div className="absolute bottom-6 left-6 right-6">
@@ -213,7 +217,14 @@ useEffect(() => {
             </Avatar>
             <div className="flex-1 text-white">
               <div className="flex items-center gap-2 mb-1">
-                <h1 className="text-2xl lg:text-3xl font-bold">{groupData.name}</h1>
+                {/* <h1 className="text-2xl lg:text-3xl font-bold"></h1> */}
+                {url && (
+  <h1 className="text-2xl lg:text-3xl font-bold">
+    {formatUrlTitle(String(url))}
+  </h1>
+)}
+
+                {/* <h1 className="text-2xl lg:text-3xl font-bold">{groupData.name}</h1> */}
                 {groupData.privacy === "Private" && (
                   <Badge variant="secondary" className="bg-red-500/90 text-white border-0">
                     <Lock className="h-3 w-3 mr-1" />
@@ -221,7 +232,7 @@ useEffect(() => {
                   </Badge>
                 )}
               </div>
-              <p className="text-white/90 mb-2">{groupData.description}</p>
+              {/* <p className="text-white/90 mb-2">{groupData.description}</p> */}
               <div className="flex items-center gap-4 text-sm text-white/80">
                 <div className="flex items-center gap-1">
                   <Users className="h-4 w-4" />
@@ -288,7 +299,21 @@ useEffect(() => {
     <>
       {/* Render this part only when loading is false */}
     {!Array.isArray(groupThreads?.data) || groupThreads.data.length === 0 ? (
-      <div className="text-gray-500 text-center py-8">No posts found for this group.</div>
+       <Card className="text-center py-2">
+    <CardContent>
+      <div className="flex flex-col items-center space-y-4">
+        <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center">
+          <MessageSquare className="h-12 w-12 text-gray-400" />
+        </div>
+        <div className="space-y-2">
+          <h3 className="text-xl font-semibold text-gray-900">No Posts Yet</h3>
+          <p className="text-gray-600 max-w-md">
+            This group doesn't have any posts yet.
+          </p>
+        </div>
+      </div>
+    </CardContent>
+  </Card>
     ) : (
       groupThreads.data.map((thread: GroupThreadsDataInterface) => (
           <Link key={thread.threadId} href={`/${url}/${groupId}/${thread.threadId}`}>
