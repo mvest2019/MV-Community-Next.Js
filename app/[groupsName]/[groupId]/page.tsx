@@ -29,7 +29,7 @@ import Image from "next/image"
 import { useParams } from "next/navigation"
 import { AppLayout } from "@/components/app-layout"
 import Link from "next/link"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { getGroupThreads } from "@/services/service"
 import { GroupThreadsDataInterface, GroupThreadsInterface } from "@/types/community-types"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -40,6 +40,11 @@ export default function GroupPage() {
   const url = params.groupsName
   const [groupThreads, setGroupThreads] = useState<GroupThreadsInterface | null>(null)
   const [loading, setLoading] = useState(true)
+  // for Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalGroups, setTotalGroups] = useState(0);
+  const pageSize = 10; // or get from API if dynamic
 
   // Sample group data
   const groupData = {
@@ -152,14 +157,38 @@ function getTimeAgo(dateString: string): string {
   // {called api to fetch group data}
 useEffect(() => {
   async function fetchThreads() {
-    setLoading(true)
-    const response = await getGroupThreads(Number(groupId), 1, 10)
-    // If response is an array, use response[0]; if it's an object, use response directly
-    setGroupThreads(Array.isArray(response) ? response[0] : response)
-    setLoading(false)
+    setLoading(true);
+    const response = await getGroupThreads(Number(groupId), currentPage, pageSize);
+    const data = Array.isArray(response) ? response[0] : response;
+    setGroupThreads(data);
+
+    // Make sure your API returns total count of posts (e.g., data.total)
+    if (data && typeof data.total === "number") {
+      setTotalGroups(data.total);
+      setTotalPages(Math.ceil(data.total / pageSize));
+    } else {
+      setTotalGroups(0);
+      setTotalPages(1);
+    }
+
+    setLoading(false);
   }
-  fetchThreads()
-}, [groupId])
+  fetchThreads();
+}, [groupId, currentPage]);
+ const postsTopRef = useRef<HTMLDivElement>(null);
+// Pagination handlers
+  const handlePreviousPage = () => {
+    setCurrentPage((prev) => Math.max(prev - 1, 1));
+    postsTopRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+  const handleNextPage = () => {
+    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+    postsTopRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+  const handlePageClick = (pageNumber: number) => {
+    setCurrentPage(pageNumber);
+    postsTopRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
   return (
     <AppLayout
@@ -372,11 +401,70 @@ useEffect(() => {
         ))
       )}
     </>
+    
   )}
 </div>
+    {/* Pagination Controls */}
+     {totalPages > 1 && (
+  <div className="flex items-center justify-between mt-8 p-4 bg-gray-50 rounded-lg">
+    <div className="flex items-center gap-2">
+      <Button onClick={handlePreviousPage} disabled={currentPage === 1} variant="outline" size="sm">
+        Previous
+      </Button>
+      <div className="flex items-center gap-1">
+        {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNumber) => (
+          <Button
+            key={pageNumber}
+            onClick={() => handlePageClick(pageNumber)}
+            variant={currentPage === pageNumber ? "default" : "outline"}
+            size="sm"
+            className="w-8 h-8 p-0"
+          >
+            {pageNumber}
+          </Button>
+        ))}
+      </div>
+      <Button onClick={handleNextPage} disabled={currentPage === totalPages} variant="outline" size="sm">
+        Next
+      </Button>
+    </div>
+    <div className="text-sm text-gray-600">
+      Page {currentPage} of {totalPages} ({totalGroups} total posts)
+    </div>
+  </div>
+)}
 
         </div>
       </div>
+   
+  {/* {totalPages > 1 && (
+    <div className="flex items-center justify-between mt-8 p-4 bg-gray-50 rounded-lg">
+      <div className="flex items-center gap-2">
+        <Button onClick={handlePreviousPage} disabled={currentPage === 1} variant="outline" size="sm">
+          Previous
+        </Button>
+        <div className="flex items-center gap-1">
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNumber) => (
+            <Button
+              key={pageNumber}
+              onClick={() => handlePageClick(pageNumber)}
+              variant={currentPage === pageNumber ? "default" : "outline"}
+              size="sm"
+              className="w-8 h-8 p-0"
+            >
+              {pageNumber}
+            </Button>
+          ))}
+        </div>
+        <Button onClick={handleNextPage} disabled={currentPage === totalPages} variant="outline" size="sm">
+          Next
+        </Button>
+      </div>
+      <div className="text-sm text-gray-600">
+        Page {currentPage} of {totalPages} ({groupThreads?.total ?? 0} total posts)
+      </div>
+    </div>
+  )} */}
     </AppLayout>
   )
 }

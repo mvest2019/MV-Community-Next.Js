@@ -1027,7 +1027,7 @@ function timeAgo(dateString: string) {
                {threadDetail.posts.some(post => post.postType === "reply") && (
   <div className="flex items-center justify-between mb-4">
     <h2 className="text-xl font-semibold text-gray-900">
-      {threadDetail.posts.filter(post => post.postType === "reply").length} Replays
+      {threadDetail.posts.filter(post => post.postType === "reply").length} Replies
     </h2>
   </div>
 )}

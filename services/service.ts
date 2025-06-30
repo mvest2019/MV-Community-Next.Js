@@ -47,12 +47,12 @@ Promise<PublicGroupInterface[]> => {
 // export group threads
 export const getGroupThreads = async (
   grpId: number,
-  pageno: number = 1,
-  noofthreads: number = 10
+  currentPage: number,
+  pageSize: number
 ): Promise<GroupThreadsInterface[]> => {
   try {
     const response = await axios.get(
-      `https://mineralview-community.mineralview.com/api/getgroupthreads?grpId=${grpId}&pageno=${pageno}&noofthreads=${noofthreads}`
+      `https://mineralview-community.mineralview.com/api/getgroupthreads?grpId=${grpId}&pageno=${currentPage}&noofthreads=${pageSize}`
     )
    
     if (response.status === 200) {
