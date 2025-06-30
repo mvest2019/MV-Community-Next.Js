@@ -200,21 +200,17 @@ const [commentVotes, setCommentVotes] = useState<{
 const handleQuestionVote = async (postId?: number, type?: "upvote" | "downvote") => {
  
    if (!isLoggedIn) {
-     console.log(isLoggedIn, "isLoggedIn in handleQuestionVote");
     setShowLoginPopup(true);
     return;
   }
   if (!threadDetail) {
-    console.error("threadDetail is undefined in handleQuestionVote");
     return;
   }
   if (!postId || !type) {
-    console.error("postId or type is undefined in handleQuestionVote");
     return;
   }
   const threadIdVal = threadDetail.threadId;
   if (!threadIdVal) {
-    console.error("threadId is undefined in handleQuestionVote");
     return;
   }
   try {
@@ -225,6 +221,11 @@ const handleQuestionVote = async (postId?: number, type?: "upvote" | "downvote")
       uId,
       uname: userName,
     });
+     toast.success(
+      type === "upvote"
+        ? "Upvote registered successfully!"
+        : "Downvote registered successfully!"
+    );
     const updatedDetail = await getThreadDetails(String(threadIdVal));
     if (!updatedDetail) {
       console.error("API returned undefined for updatedDetail");
@@ -319,7 +320,26 @@ console.log(isLoggedIn, "isLoggedIn in PostDetailPage");
     //   },
     // ]);
 
-
+  // Add the new reply to the UI immediately
+    setThreadDetail((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        posts: [
+          ...prev.posts,
+          {
+            ...response, // Make sure response matches your answer object shape
+            postType: "reply",
+            comments: [],
+            upvoteCnt: 0,
+            downvoteCnt: 0,
+            createdAt: new Date().toISOString(),
+            uname: userName,
+            uId: uId,
+          },
+        ],
+      };
+    });
     setAnswerContent("");
     setShowAnswerEditor(false);
 
