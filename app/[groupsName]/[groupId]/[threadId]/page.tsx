@@ -523,19 +523,36 @@ const handleAddComment = async ({
     toast.error("Failed to post comment. Please try again.");
   }
 };
-useEffect(() => {
-  async function fetchThread() {
-    try {
-      if (threadId) {
-        const detail = await getThreadDetails(String(threadId));
-        setThreadDetail(detail);
+// useEffect(() => {
+//   async function fetchThread() {
+//     try {
+//       if (threadId) {
+//         const detail = await getThreadDetails(String(threadId));
+//         setThreadDetail(detail);
+//       }
+//     } catch (error) {
+//       console.error("Error fetching thread details:", error);
+//     }
+//   }
+//   if (threadId) fetchThread();
+// }, [threadId]);
+const fetchedRef = useRef(false);
+ useEffect(() => {
+    async function fetchThread() {
+      try {
+        if (threadId) {
+          const detail = await getThreadDetails(String(threadId));
+          setThreadDetail(detail);
+        }
+      } catch (error) {
+        console.error("Error fetching thread details:", error);
       }
-    } catch (error) {
-      console.error("Error fetching thread details:", error);
     }
-  }
-  if (threadId) fetchThread();
-}, [threadId]);
+    if (threadId && !fetchedRef.current) {
+      fetchedRef.current = true;
+      fetchThread();
+    }
+  }, [threadId]);
 // const handleAddQuestionComment = async (postId:number) => {
 //   if (!replyContent.trim()) return;
 //   if (!threadDetail) return;
@@ -783,7 +800,7 @@ function timeAgo(dateString: string) {
     }setShowAnswerEditor(!showAnswerEditor)}}
                     className="bg-blue-600 hover:bg-blue-700 ml-auto"
                   >
-                    Post Your Replay
+                    Post Your Reply
                   </Button>
                     </div>
                     
@@ -852,7 +869,7 @@ function timeAgo(dateString: string) {
                         onInput={(e) => setAnswerContent(e.currentTarget.innerHTML)}
                         suppressContentEditableWarning={true}
                       >
-                        <p>Type your answer here...</p>
+                        <p>Type your reply here...</p>
                       </div>
                     </div>
 
@@ -871,7 +888,7 @@ function timeAgo(dateString: string) {
                       </Button>
                       <Button onClick={handleAddAnswer} className="bg-blue-600 hover:bg-blue-700">
                         <Send className="h-4 w-4 mr-2" />
-                        Post Your Answer
+                        Post Your Reply
                       </Button>
                     </div>
                   </div>

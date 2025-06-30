@@ -69,8 +69,9 @@ export const getGroupThreads = async (
 export const getThreadDetails = async (
   threadId: string,
 ): Promise<GroupThreadDetailsInterface> => {
-  const response = await axios.get(
-    `https://mineralview-community.mineralview.com/api/getthreaddetails?threadId=${threadId}`
+  const response = await axios.post(
+    `https://mineralview-community.mineralview.com/api/getthreaddetails`,
+    { threadId: threadId }
   );
   if (response.status === 200) {
     return response.data; // should be a single thread detail object
