@@ -44,7 +44,7 @@ import { useState, useRef, useEffect } from "react"
 import { useParams } from "next/navigation"
 import { AppLayout } from "@/components/app-layout"
 import { useToast } from "@/components/ui/use-toast"
-import { getThreadDetails } from "@/services/service"
+import { getThreadDetailById, getThreadDetails } from "@/services/service"
 import { GroupThreadDetailsInterface } from "@/types/community-types"
 import { acceptThreadAnswer, addThreadComment, voteThreadPost } from "@/services/threadId-service"
 import { addThreadAnswer } from "@/services/threadId-service";
@@ -574,37 +574,18 @@ const fetchedRef = useRef(false);
       fetchThread();
     }
   }, [threadId]);
-// const handleAddQuestionComment = async (postId:number) => {
-//   if (!replyContent.trim()) return;
-//   if (!threadDetail) return;
-
-//   try {
-//     // Replace with actual user info in production
-//     const userId = 123;
-//     const username = "SC";
-//     // const postId = threadDetail.posts[0]?.postId;
-//     const threadId = threadDetail.threadId;
-
-//     await addThreadComment({
-//       threadId,
-//       postId,
-//       userId,
-//       username,
-//       content: replyContent,
-//     });
-
-//     toast.success(
-//      "Your comment has been posted successfully.");
-
-//     setReplyContent("");
-//     setShowReplyEditor(false);
-
-//     // Optionally, refresh comments by refetching thread details
-//     // or append the new comment to your local state
-//   } catch (error) {
-//     toast.error("Failed to post comment. Please try again.");
-//   }
-// };
+useEffect(() => {
+  async function fetchThread() {
+    if (!groupId) return; // Prevent API call if groupId is undefined
+    try {
+      const data = await getThreadDetailById(String(threadId));
+      // setGroupThreads(data);
+    } catch (error) {
+      console.error("Failed to fetch group data:", error);
+    }
+  }
+  if (groupId) fetchThread();
+}, [groupId]);
 function timeAgo(dateString: string) {
   const date = new Date(dateString);
   const now = new Date();
@@ -661,6 +642,8 @@ const handleAcceptAnswer = async (postId: number) => {
     toast.error("Failed to accept answer. Please try again.");
   }
 };
+// Add this utility function at the top of your file or near your component
+
   return (
     <AppLayout
       backLink={{
@@ -1141,19 +1124,16 @@ const handleAcceptAnswer = async (postId: number) => {
                             {/* Answer Author */}
                             <div className="flex items-center justify-between mt-2 mb-2">
                               <div className="text-sm text-gray-500">answered {timeAgo(answer.createdAt)}</div>
-                              <div className="flex items-center gap-3 bg-blue-50 p-2 rounded-md">
-                                <Avatar className="h-8 w-8 flex-shrink-0">
-                                  {/* <AvatarImage src={answer.author.avatar || "/placeholder.svg"} /> */}
-                                  <AvatarFallback>{answer.uname[0]}</AvatarFallback>
-                                </Avatar>
-                                <div>
-                                  <div className="font-medium text-gray-900">{answer.uname}</div>
-                                  {/* <div className="flex items-center gap-1 text-xs text-gray-500">
-                                    <Star className="h-3 w-3 text-yellow-500" fill="currentColor" />
-                                    <span>{answer.author.reputation}</span>
-                                  </div> */}
-                                </div>
-                              </div>
+                             <div className="flex items-center gap-3 bg-blue-50 p-2 rounded-md">
+ <Avatar className="h-8 w-8 flex-shrink-0 bg-orange-600">
+  <AvatarFallback className="text-black font-bold">
+    {answer.uname?.[0]?.toUpperCase() || "?"}
+  </AvatarFallback>
+</Avatar>
+  <div>
+    <div className="font-medium text-gray-900">{answer.uname}</div>
+  </div>
+</div>
                             </div>
 
                             {/* Answer Actions */}

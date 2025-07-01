@@ -85,3 +85,19 @@ export const getRecentActivity = async () => {
   const response = await axios.get("https://mineralview-community.mineralview.com/api/recentactivity");
   return response.data;
 };
+// 
+export async function getGroupView(grpId: number) {
+  const response = await axios.post(
+    "https://mineralview-community.mineralview.com/api/group/view",
+    { grpId }
+  );
+  return response.data;
+}
+// for viewing a thread by its ID
+export async function getThreadDetailById(threadId: string) {
+  const response = await axios.post(
+    "https://mineralview-community.mineralview.com/api/thread/view",
+    { threadId }
+  );
+  return response.data;
+}

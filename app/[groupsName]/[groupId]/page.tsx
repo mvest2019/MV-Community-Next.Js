@@ -24,13 +24,14 @@ import {
   MoreHorizontal,
   Bookmark,
   Camera,
+  Reply,
 } from "lucide-react"
 import Image from "next/image"
 import { useParams } from "next/navigation"
 import { AppLayout } from "@/components/app-layout"
 import Link from "next/link"
 import { useEffect, useRef, useState } from "react"
-import { getGroupThreads } from "@/services/service"
+import { getGroupThreads, getGroupView } from "@/services/service"
 import { GroupThreadsDataInterface, GroupThreadsInterface } from "@/types/community-types"
 import { Skeleton } from "@/components/ui/skeleton"
 
@@ -61,85 +62,24 @@ export default function GroupPage() {
     isJoined: true,
   }
 
-  // Sample group posts
-  // const groupPosts = [
-  //   {
-  //     id: 1,
-  //     author: {
-  //       name: "Sarah Mitchell",
-  //       username: "SarahM_Landowner",
-  //       avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=40&h=40&fit=crop&crop=face",
-  //       verified: true,
-  //       reputation: 4.9,
-  //     },
-  //     content:
-  //       "Just received my Q4 royalty statement and noticed some discrepancies in the calculations. Has anyone else experienced issues with XYZ Energy's reporting? The volumes seem off compared to what I'm seeing from the Railroad Commission data.",
-  //     timestamp: "2 hours ago",
-  //     category: "Royalty Payments",
-  //     engagement: {
-  //       likes: 24,
-  //       comments: 8,
-  //       shares: 3,
-  //       views: 156,
-  //     },
-  //     tags: ["royalty-payments", "permian-basin", "xyz-energy"],
-  //     hasImage: false,
-  //     isBestPractice: false,
-  //   },
-  //   {
-  //     id: 2,
-  //     author: {
-  //       name: "Marcus Rodriguez",
-  //       username: "MarcusR_Geology",
-  //       avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop&crop=face",
-  //       verified: true,
-  //       reputation: 4.8,
-  //     },
-  //     content:
-  //       "🏆 BEST PRACTICE: When negotiating lease terms, always include a 'no deduction' clause for post-production costs. This can save you thousands in the long run. Here's a template clause that has worked well for my clients...",
-  //     timestamp: "4 hours ago",
-  //     category: "Lease Negotiation",
-  //     engagement: {
-  //       likes: 89,
-  //       comments: 23,
-  //       shares: 15,
-  //       views: 445,
-  //     },
-  //     tags: ["lease-negotiation", "best-practices", "legal-advice"],
-  //     hasImage: true,
-  //     isBestPractice: true,
-  //   },
-  //   {
-  //     id: 3,
-  //     author: {
-  //       name: "Jennifer Walsh",
-  //       username: "JenW_EagleForrd",
-  //       avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=40&h=40&fit=crop&crop=face",
-  //       verified: false,
-  //       reputation: 4.6,
-  //     },
-  //     content:
-  //       "Update on the drilling activity near my property: The operator finally provided the updated drilling schedule. They'll be starting horizontal drilling next month. Noise levels have been manageable so far, but I'm keeping detailed logs just in case.",
-  //     timestamp: "6 hours ago",
-  //     category: "Drilling Updates",
-  //     engagement: {
-  //       likes: 12,
-  //       comments: 5,
-  //       shares: 2,
-  //       views: 89,
-  //     },
-  //     tags: ["drilling", "eagle-ford", "property-updates"],
-  //     hasImage: false,
-  //     isBestPractice: false,
-  //   },
-  // ]
-  // Converts ISO date string to "X weeks/months/years ago"
 function getTimeAgo(dateString: string): string {
   const now = new Date();
   const created = new Date(dateString);
   const diffMs = now.getTime() - created.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const diffSeconds = Math.floor(diffMs / 1000);
+  const diffMinutes = Math.floor(diffSeconds / 60);
+  const diffHours = Math.floor(diffMinutes / 60);
+  const diffDays = Math.floor(diffHours / 24);
 
+  if (diffSeconds < 60) {
+    return "Just now";
+  }
+  if (diffMinutes < 60) {
+    return `${diffMinutes} min${diffMinutes !== 1 ? "s" : ""} ago`;
+  }
+  if (diffHours < 24) {
+    return `${diffHours} hour${diffHours !== 1 ? "s" : ""} ago`;
+  }
   if (diffDays < 7) {
     return `${diffDays} day${diffDays !== 1 ? "s" : ""} ago`;
   }
@@ -157,6 +97,7 @@ function getTimeAgo(dateString: string): string {
   // {called api to fetch group data}
 useEffect(() => {
   async function fetchThreads() {
+     if (!groupId) return; // Prevent API call if groupId is undefined
     setLoading(true);
     const response = await getGroupThreads(Number(groupId), currentPage, pageSize);
     const data = Array.isArray(response) ? response[0] : response;
@@ -175,6 +116,20 @@ useEffect(() => {
   }
   fetchThreads();
 }, [groupId, currentPage]);
+// When fetching group data
+useEffect(() => {
+  async function fetchGroupData() {
+    if (!groupId) return; // Prevent API call if groupId is undefined
+    try {
+      const data = await getGroupView(Number(groupId));
+      // setGroupThreads(data);
+    } catch (error) {
+      console.error("Failed to fetch group data:", error);
+    }
+  }
+  if (groupId) fetchGroupData();
+}, [groupId]);
+
  const postsTopRef = useRef<HTMLDivElement>(null);
 // Pagination handlers
   const handlePreviousPage = () => {
@@ -194,6 +149,7 @@ function formatUrlTitle(url: string) {
     .replace(/-/g, " ")
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }
+
   return (
     <AppLayout
       backLink={{
@@ -240,17 +196,17 @@ function formatUrlTitle(url: string) {
                 </div>
                 <div className="flex items-center gap-1">
                   <MessageSquare className="h-4 w-4" />
-                  <span>{groupData.postCount} posts</span>
+                  <span>{groupThreads?.total ?? 0} posts</span>
                 </div>
                 <span>•</span>
                 <span>{groupData.category}</span>
               </div>
             </div>
             <div className="flex gap-2">
-              <Button variant="secondary" className="bg-white/20 text-white border-white/30 hover:bg-white/30">
+              {/* <Button variant="secondary" className="bg-white/20 text-white border-white/30 hover:bg-white/30">
                 <Plus className="h-4 w-4 mr-2" />
                 Post
-              </Button>
+              </Button> */}
               <Button variant="secondary" className="bg-white/20 text-white border-white/30 hover:bg-white/30">
                 <Users className="h-4 w-4 mr-2" />
                 Members
@@ -341,8 +297,8 @@ function formatUrlTitle(url: string) {
                         </h3>
                       </div>
                       <div className="flex flex-wrap items-center gap-2 text-sm text-gray-500">
-                        <span>@{thread.userName}</span>
-                        <span>•</span>
+                        {/* <span>@{thread.userName}</span>
+                        <span>•</span> */}
                         <span>{getTimeAgo(thread.lastActivity)}</span>
                       </div>
                     </div>
@@ -387,7 +343,7 @@ function formatUrlTitle(url: string) {
                 </div>
 
                 {/* 🏷 Hashtags */}
-                <div className="flex flex-wrap gap-2 mb-4">
+                {/* <div className="flex flex-wrap gap-2 mb-4">
   {Array.isArray(thread.hashtags) &&
     thread.hashtags.map((tag) => (
       <Badge
@@ -398,7 +354,7 @@ function formatUrlTitle(url: string) {
         {tag}
       </Badge>
     ))}
-</div>
+</div> */}
 
                 {/* 📊 Engagement Stats */}
                 <div className="flex items-center justify-between pt-4 border-t border-gray-100">
@@ -415,10 +371,15 @@ function formatUrlTitle(url: string) {
                       <span className="text-sm font-medium">{thread.NofOfComments}</span>
                     </div>
                     <div className="flex items-center gap-2 text-gray-500">
-                      <Users className="h-5 w-5" />
+                      <Reply className="h-5 w-5" />
                       <span className="text-sm font-medium">{thread.NofOfReplies}</span>
                     </div>
+                    
                   </div>
+                   <div className="flex items-center gap-1 text-gray-400">
+                        <Eye className="h-4 w-4" />
+                        <span className="text-sm">{thread.views} views</span>
+                      </div>
                 </div>
               </CardContent>
             </Card>

@@ -59,6 +59,7 @@ export interface GroupThreadsDataInterface {
   NofOfReplies: number
   NofOfVotes: number
   NofOfComments: number
+  views: number
   _id: string
   hashtags: any[]
 }
