@@ -1118,7 +1118,9 @@ const handleAcceptAnswer = async (postId: number) => {
                             {/* Answer Content */}
                             <div
                               className="prose prose-gray max-w-none mb-2"
-                              dangerouslySetInnerHTML={{ __html: answer.content }}
+                              dangerouslySetInnerHTML={{  __html: answer.content
+      ? answer.content.replace(/^[\d\s\.\:\)\-]+/, "")
+      : "", }}
                             />
 
                             {/* Answer Author */}
@@ -1245,9 +1247,9 @@ const handleAcceptAnswer = async (postId: number) => {
                                        <div className="flex-1">
       <div className="flex items-center gap-2 mb-1">
         <Avatar className="h-5 w-5 flex-shrink-0">
-          <AvatarImage src={comment.author?.avatar || "/placeholder.svg"} />
+          {/* <AvatarImage src={comment.author?.avatar || "/placeholder.svg"} /> */}
           <AvatarFallback>
-            {comment.author?.name ? comment.author.name[0] : "?"}
+            {comment.uname?.[0]?.toUpperCase() || "?"}
           </AvatarFallback>
         </Avatar>
         <span className="font-medium text-gray-700">{comment.author?.name || comment.uname || "Unknown"}</span>

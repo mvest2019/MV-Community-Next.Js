@@ -338,7 +338,8 @@ function formatUrlTitle(url: string) {
                   </strong>
                 <p
   className="text-gray-800 break-words leading-relaxed line-clamp-2"
-  dangerouslySetInnerHTML={{ __html: thread.lastReply }}
+  dangerouslySetInnerHTML={{ __html: thread.lastReply  ? thread.lastReply.replace(/^[\d\s\.\:\)\-]+/, "")
+      : "",}}
 />
                 </div>
 
