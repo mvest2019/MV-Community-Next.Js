@@ -308,8 +308,9 @@ function timeAgo(dateString: string) {
                     </p>
                     <div className="flex flex-wrap items-center gap-2 sm:gap-3 lg:gap-4 text-xs sm:text-sm text-gray-500">
                       <div className="flex items-center gap-1">
+                        <span className="font-medium text-blue-600">{activity.userName}</span>
                         <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
-                         <span className="font-medium text-blue-600">{activity.userName}</span>
+                         
                         <span>{timeAgo(activity.lastActivity)}</span>
                       </div>
                       <span>{activity.extra}</span>
