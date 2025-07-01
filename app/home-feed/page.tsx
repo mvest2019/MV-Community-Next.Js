@@ -299,7 +299,6 @@ export default function HomeFeedPage() {
               <Card
                 key={post.id}
                 className="hover:shadow-md transition-shadow cursor-pointer"
-                onClick={() => navigateToPost(post)}
               >
                 <CardContent className="p-6">
                   {/* Post Header */}
