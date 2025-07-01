@@ -44,10 +44,10 @@ export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false)
   const [isEditingRole, setIsEditingRole] = useState(false)
   const [profileData, setProfileData] = useState({
-    name: "John Doe",
+    name: "Aboli Mundralkar",
     title: "Mineral Rights Expert & Landowner",
     location: "Texas, USA",
-    email: "john.doe@email.com",
+    email: "aboli.5@email.com",
     punchline: "Helping landowners maximize their mineral rights potential",
     credentials: "Certified Petroleum Landman (CPL), Licensed Real Estate Broker",
     role: "Landowner",
