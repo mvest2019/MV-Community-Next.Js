@@ -386,7 +386,7 @@ const handleOpenAskQuestion = async () => {
   return (
     <div className={`bg-slate-700 text-white flex flex-col ${className}`}>
       {/* Logo/Header */}
-      <div className="p-4 lg:p-6 border-b border-slate-600">
+      <div className="p-3 lg:p-4 border-b border-slate-600">
         <div className="flex items-center gap-3">
           <div className="h-8 w-8 rounded-lg flex items-center justify-center">
             <Image

@@ -33,7 +33,7 @@ export function AppLayout({ children, pageTitle, searchPlaceholder = "Search..."
   return (
     <div className="flex h-screen bg-gray-50 font-montserrat">
       {/* Desktop Sidebar */}
-      <div className="hidden lg:flex w-[248px]">
+      <div className="hidden lg:flex w-[220px]">
         <Sidebar className="w-full" />
       </div>
 
@@ -60,13 +60,15 @@ export function AppLayout({ children, pageTitle, searchPlaceholder = "Search..."
             </Sheet>
 
             {/* Back Arrow + "Back" */}
-            <Link
-              href="/community"
-              className="flex items-center gap-2 text-white hover:text-gray-300 transition-colors"
-            >
-              <ArrowLeft className="h-5 w-5" />
-              <span className="text-sm font-medium">Back</span>
-            </Link>
+            {pageTitle !== "Welcome to Community" && (
+  <Link
+    href="/community"
+    className="flex items-center gap-2 text-white hover:text-gray-300 transition-colors"
+  >
+    <ArrowLeft className="h-5 w-5" />
+    <span className="text-sm font-medium">Back</span>
+  </Link>
+)}
 
             {/* Page Title - Increased font size */}
             {pageTitle && <h1 className="text-xl lg:text-2xl font-bold text-white">{pageTitle}</h1>}

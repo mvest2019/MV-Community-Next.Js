@@ -101,3 +101,14 @@ export async function getThreadDetailById(threadId: string) {
   );
   return response.data;
 }
+// latest blogs
+export async function getLatestBlogs() {
+  const response = await axios.post(
+    "https://mview-info.mineralview.com/NewsFramework/Blog_data",
+    {
+      Category: "Latest Blogs",
+      type: "Blog",
+    }
+  );
+  return response.data;
+}
