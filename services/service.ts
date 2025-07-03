@@ -81,7 +81,7 @@ export const getThreadDetails = async (
 }
 // export recent activity
 // This function fetches recent activity from the community API
-export const getRecentActivity = async () => {
+export async function getRecentActivity() {
   const response = await axios.get("https://mineralview-community.mineralview.com/api/recentactivity");
   return response.data;
 };
