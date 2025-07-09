@@ -19,6 +19,7 @@ import {
   MessageSquare,
   Clock,
   Check,
+  X,
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
@@ -140,12 +141,12 @@ export function Sidebar({ className }: SidebarProps) {
       label: "Community",
       iconColor: "text-emerald-400",
     },
-    {
-      href: "/home-feed",
-      icon: Home,
-      label: "Home Feed",
-      iconColor: "text-blue-400",
-    },
+    // {
+    //   href: "/home-feed",
+    //   icon: Home,
+    //   label: "Home Feed",
+    //   iconColor: "text-blue-400",
+    // },
     {
       href: "#",
       icon: Plus,
