@@ -462,6 +462,8 @@ const handleOpenAskQuestion = async () => {
   // }
   setAskQuestionOpen(true)
 }
+// image 
+const fileInputRef = useRef<HTMLInputElement>(null);
   return (
     <div className={`bg-slate-700 text-white flex flex-col ${className}`}>
       {/* Logo/Header */}
@@ -666,19 +668,50 @@ const handleOpenAskQuestion = async () => {
                       >
                         <Link2 className="h-4 w-4" />
                       </button>
-                      <div className="flex items-center gap-2 mt-2">
-  <label className="cursor-pointer flex items-center gap-1 text-sm text-blue-600 hover:underline">
-    <Camera className="h-5 w-5" />
-    <span>Attach Image/Video</span>
-    <input
-      type="file"
-      accept="image/*,video/*"
-      multiple
-      className="hidden"
-      onChange={handleAttachmentChange}
-    />
-  </label>
-</div>
+               {/* Camera Button */}
+  <label className="p-2 hover:bg-gray-200 rounded transition-colors cursor-pointer text-black flex items-center" title="Attach Image/Video">
+  <Camera className="h-5 w-5 text-black" />
+<input
+  ref={fileInputRef}
+  type="file"
+  accept="image/*,video/*"
+  multiple={false}
+  className="hidden"
+  onChange={e => {
+    // Only allow one attachment at a time
+    if (attachments.length > 0) {
+      toast("You can attach only 1 image or video.");
+      // Reset the file input so user can select again if needed
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 200 * 1024 * 1024) {
+      toast("File size must be less than 200MB");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      if (editorRef.current) {
+        editorRef.current.focus();
+        let html = "";
+        if (file.type.startsWith("image")) {
+          html = `<img src="${ev.target?.result}" alt="attachment" class="max-w-full my-2 rounded" />`;
+        } else if (file.type.startsWith("video")) {
+          html = `<video src="${ev.target?.result}" controls class="max-w-full my-2 rounded"></video>`;
+        }
+        document.execCommand("insertHTML", false, html);
+        setEditorContent(editorRef.current.innerHTML);
+        setAttachments([file]); // Track the attachment
+        if (fileInputRef.current) fileInputRef.current.value = "";
+      }
+    };
+    reader.readAsDataURL(file);
+  }}
+/>
+</label>
 
 {/* Preview */}
 {attachmentPreviews.length > 0 && (
@@ -690,14 +723,12 @@ const handleOpenAskQuestion = async () => {
         ) : (
           <video src={attachmentPreviews[idx]} controls className="object-cover w-full h-full" />
         )}
-        <button
+       <button
           type="button"
           className="absolute top-1 right-1 bg-white bg-opacity-80 rounded-full p-1 text-xs"
           onClick={() => {
-            const newFiles = attachments.filter((_, i) => i !== idx);
-            const newPreviews = attachmentPreviews.filter((_, i) => i !== idx);
-            setAttachments(newFiles);
-            setAttachmentPreviews(newPreviews);
+            setAttachments([]);
+            setAttachmentPreviews([]);
           }}
         >
           ×

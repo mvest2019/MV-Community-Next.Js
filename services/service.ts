@@ -1,4 +1,4 @@
-'use client';
+// 'use client';
 
 import axios from 'axios';
 import { AddQuestionRequestInterface, AskQuestionResponseInterface, GroupThreadDetailsInterface, GroupThreadsInterface, PublicGroupInterface } from "@/types/community-types";
@@ -95,10 +95,18 @@ export const getThreadDetails = async (
 }
 // export recent activity
 // This function fetches recent activity from the community API
-export const getRecentActivity = async () => {
-  const response = await axios.get("https://mineralview-community.mineralview.com/api/recentactivity");
-  return response.data;
-};
+export async function getRecentActivity() {
+  const response = await fetch("https://mineralview-community.mineralview.com/api/recentactivity", {
+    method: "GET",
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    const text = await response.text();
+    console.error("Recent Activity API error:", response.status, text);
+    throw new Error(`Failed to fetch recent activity: ${response.status} ${text}`);
+  }
+  return response.json();
+}
 // 
 export async function getGroupView(grpId: number) {
   const response = await axios.post(
