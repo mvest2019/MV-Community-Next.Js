@@ -23,7 +23,7 @@ import {
 import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 // import { useToast } from "@/components/ui/use-toast"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
@@ -68,6 +68,15 @@ const userName = user ? `${user.f_name} ${user.l_name}` : "";
     category: "Regional",
     body: "Join our new private group!",
   })
+  // media
+const getPlainText = (html: string) => {
+  const div = document.createElement("div");
+  div.innerHTML = html;
+  return div.textContent || div.innerText || "";
+};
+// media
+const [attachments, setAttachments] = useState<File[]>([]);
+const [attachmentPreviews, setAttachmentPreviews] = useState<string[]>([]);
 
   const [showAutocomplete, setShowAutocomplete] = useState(false)
   const [autocompleteSuggestions, setAutocompleteSuggestions] = useState<any[]>([])
@@ -158,12 +167,12 @@ const [publicGroups, setPublicGroups] = useState<{ grpId: number; grpName: strin
       label: "Community",
       iconColor: "text-emerald-400",
     },
-    {
-      href: "/home-feed",
-      icon: Home,
-      label: "Home Feed",
-      iconColor: "text-blue-400",
-    },
+    // {
+    //   href: "/home-feed",
+    //   icon: Home,
+    //   label: "Home Feed",
+    //   iconColor: "text-blue-400",
+    // },
     {
       href: "#",
       icon: Plus,
@@ -216,6 +225,33 @@ const [publicGroups, setPublicGroups] = useState<{ grpId: number; grpName: strin
   const [showAllCategories, setShowAllCategories] = useState(false)
   const defaultCategoriesCount = 4
 
+  // media
+const editorRef = useRef<HTMLDivElement>(null); // Add this at the top of your component
+
+const handleAttachmentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const files = Array.from(e.target.files || []);
+  setAttachments(files);
+
+  files.forEach((file) => {
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      if (editorRef.current) {
+        editorRef.current.focus();
+        let html = "";
+        if (file.type.startsWith("image")) {
+          html = `<img src="${ev.target?.result}" alt="attachment" class="max-w-full my-2 rounded" />`;
+        } else if (file.type.startsWith("video")) {
+          html = `<video src="${ev.target?.result}" controls class="max-w-full my-2 rounded"></video>`;
+        }
+        document.execCommand("insertHTML", false, html);
+        setEditorContent(editorRef.current.innerHTML);
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+};
+
+
   const handleTitleChange = (value: string) => {
     setQuestionData({ ...questionData, title: value })
 
@@ -247,60 +283,97 @@ const [publicGroups, setPublicGroups] = useState<{ grpId: number; grpName: strin
     window.location.href = post.url
   }
 
-  const handleSubmitQuestion = async () => {
-    setIsSubmitting(true)
+//   const handleSubmitQuestion = async () => {
+//     setIsSubmitting(true)
 
-    try {
-     const payload = {
-      postType: "question",
-      uId: uId, // Replace with actual user ID from context
-      uname: userName, // Replace with actual username from context
-      emailId: uEmailId, // Replace with actual user email from context
-      title: questionData.title,
-      content: editorContent,
-      grpId: questionData.grpId, // Replace with actual group ID
-      grpName: questionData.category || "Discussion",
-      hashtags: questionData.hashtags || [],
-    }
+//     try {
+//      const payload = {
+//       postType: "question",
+//       uId: uId, // Replace with actual user ID from context
+//       uname: userName, // Replace with actual username from context
+//       emailId: uEmailId, // Replace with actual user email from context
+//       title: questionData.title,
+//       content: editorContent,
+//       grpId: questionData.grpId, // Replace with actual group ID
+//       grpName: questionData.category || "Discussion",
+//       hashtags: questionData.hashtags || [],
+//     }
 
-      const response = await addQuestion(payload) 
+//       const response = await addQuestion(payload) 
  
-      if (response) {
-        // console.log("Question submitted successfully:", payload)
+//       if (response) {
+//         // console.log("Question submitted successfully:", payload)
 
-        setQuestionData({
-          title: "",
-          content: "",
-          category: "",
-          grpId: 0, // Reset group ID
-          hashtags: [],
-          currentTag: "",
-        })
-        setEditorContent("")
-        setShowAutocomplete(false)
-        setAutocompleteSuggestions([])
-        setShowAllCategories(false)
-        setAskQuestionOpen(false)
-toast.message("Your question has been posted successfully."
+//         setQuestionData({
+//           title: "",
+//           content: "",
+//           category: "",
+//           grpId: 0, // Reset group ID
+//           hashtags: [],
+//           currentTag: "",
+//         })
+//         setEditorContent("")
+//         setShowAutocomplete(false)
+//         setAutocompleteSuggestions([])
+//         setShowAllCategories(false)
+//         setAskQuestionOpen(false)
+// toast.message("Your question has been posted successfully."
          
-        )
-        //  toast({
-        //   title: "Question posted",
-        //   description: "Your question has been posted successfully.",
-        // })
-      } else {
-        throw new Error("Failed to submit question")
-      }
-    } catch (error) {
-      console.error("Error submitting question:", error)
-    toast.message("Your question has been posted successfully."
+//         )
+//         //  toast({
+//         //   title: "Question posted",
+//         //   description: "Your question has been posted successfully.",
+//         // })
+//       } else {
+//         throw new Error("Failed to submit question")
+//       }
+//     } catch (error) {
+//       console.error("Error submitting question:", error)
+//     toast.message("Your question has been posted successfully."
          
-        )
-    } finally {
-      setIsSubmitting(false)
+//         )
+//     } finally {
+//       setIsSubmitting(false)
+//     }
+//   }
+
+// media
+const handleSubmitQuestion = async () => {
+  setIsSubmitting(true);
+
+  try {
+     const plainTextContent = getPlainText(editorContent);
+
+    // Validate: description is required
+    if (!plainTextContent.trim()) {
+      toast("Please enter a description for your question.");
+      setIsSubmitting(false);
+      return;
     }
-  }
+    const formData = new FormData();
+    formData.append("postType", "question");
+    formData.append("uId", uId);
+    formData.append("uname", userName);
+    formData.append("emailId", uEmailId);
+    formData.append("title", questionData.title);
+    formData.append("content", plainTextContent);
+    formData.append("grpId", String(questionData.grpId));
+    formData.append("grpName", questionData.category || "Discussion");
+    formData.append("hashtags", JSON.stringify(questionData.hashtags || []));
 
+    attachments.forEach((file) => {
+      formData.append("userImage", file);
+    });
+
+    const response = await addQuestion(formData); // Your API should accept FormData
+
+    // ...existing success logic...
+  } catch (error) {
+    // ...existing error logic...
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
    const formatText = (command: string, value?: string) => {
     document.execCommand(command, false, value)
@@ -315,7 +388,13 @@ toast.message("Your question has been posted successfully."
     setEditorContent(content)
   }
 
-  const isFormValid = questionData.title.trim() && editorContent.trim() && questionData.category
+  // const isFormValid = questionData.title.trim() && editorContent.trim() && questionData.category
+
+  // media
+  const isFormValid =
+  questionData.title.trim() &&
+  getPlainText(editorContent).trim() && // Only check for text
+  questionData.category;
 
   const handleDialogClose = () => {
     setQuestionData({
@@ -587,13 +666,54 @@ const handleOpenAskQuestion = async () => {
                       >
                         <Link2 className="h-4 w-4" />
                       </button>
+                      <div className="flex items-center gap-2 mt-2">
+  <label className="cursor-pointer flex items-center gap-1 text-sm text-blue-600 hover:underline">
+    <Camera className="h-5 w-5" />
+    <span>Attach Image/Video</span>
+    <input
+      type="file"
+      accept="image/*,video/*"
+      multiple
+      className="hidden"
+      onChange={handleAttachmentChange}
+    />
+  </label>
+</div>
+
+{/* Preview */}
+{attachmentPreviews.length > 0 && (
+  <div className="flex flex-wrap gap-3 mt-3">
+    {attachments.map((file, idx) => (
+      <div key={idx} className="relative w-24 h-24 border rounded overflow-hidden bg-gray-100 flex items-center justify-center">
+        {file.type.startsWith("image") ? (
+          <img src={attachmentPreviews[idx]} alt="preview" className="object-cover w-full h-full" />
+        ) : (
+          <video src={attachmentPreviews[idx]} controls className="object-cover w-full h-full" />
+        )}
+        <button
+          type="button"
+          className="absolute top-1 right-1 bg-white bg-opacity-80 rounded-full p-1 text-xs"
+          onClick={() => {
+            const newFiles = attachments.filter((_, i) => i !== idx);
+            const newPreviews = attachmentPreviews.filter((_, i) => i !== idx);
+            setAttachments(newFiles);
+            setAttachmentPreviews(newPreviews);
+          }}
+        >
+          ×
+        </button>
+      </div>
+    ))}
+  </div>
+)}
                     </div>
 
                     {/* Rich Text Editor */}
                     <div
-                      id="rich-editor"
-                      contentEditable
-                      onInput={handleEditorChange}
+                     id="rich-editor"
+  ref={editorRef} // <-- add this!
+  contentEditable
+  onInput={handleEditorChange}
                       className="min-h-[120px] lg:min-h-[140px] p-3 border border-t-0 border-gray-300 rounded-b-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm lg:text-base"
                       style={{
                         maxHeight: "200px",

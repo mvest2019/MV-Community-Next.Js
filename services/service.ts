@@ -3,26 +3,40 @@
 import axios from 'axios';
 import { AddQuestionRequestInterface, AskQuestionResponseInterface, GroupThreadDetailsInterface, GroupThreadsInterface, PublicGroupInterface } from "@/types/community-types";
 
-export const addQuestion = async (
- payload: AddQuestionRequestInterface,
-): Promise<AskQuestionResponseInterface[]> => {
+// export const addQuestion = async (
+//  payload: AddQuestionRequestInterface,
+// ): Promise<AskQuestionResponseInterface[]> => {
  
-  try {
-    const response = await axios.post(
-      `https://mineralview-community.mineralview.com/api/thread/post`,
-      payload,
-    );
+//   try {
+//     const response = await axios.post(
+//       `https://mineralview-community.mineralview.com/api/thread/post`,
+//       payload,
+//     );
    
-    if (response.status === 201) {
-      return response.data;
-    } else {
-      throw new Error('post not created');
+//     if (response.status === 201) {
+//       return response.data;
+//     } else {
+//       throw new Error('post not created');
+//     }
+//   } catch (error) {
+   
+//     throw new Error(String(error) || 'An error occurred while adding the question');
+//   }
+// };
+
+// media
+export async function addQuestion(formData: FormData) {
+  const response = await axios.post(
+    "https://mineralview-community.mineralview.com/api/thread/post",
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
     }
-  } catch (error) {
-   
-    throw new Error(String(error) || 'An error occurred while adding the question');
-  }
-};
+  );
+  return response.data;
+}
 export const getPublicGroups = async (
 //  payload: AddQuestionRequestInterface,
 ): 
