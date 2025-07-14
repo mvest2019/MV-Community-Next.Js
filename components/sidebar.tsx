@@ -28,7 +28,7 @@ import { toast } from "sonner"
 // import { useToast } from "@/components/ui/use-toast"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Bold, Italic, Underline, List, ListOrdered, Link2 } from "lucide-react"
-import { addQuestion, getPublicGroups } from "@/services/service"
+import { addQuestion, getPublicGroups, getRecentActivity } from "@/services/service"
 import { useAuthAction } from "@/hooks/use-auth-action"
 import { LoginPopup } from "./login-popup"
 import { useAuth } from "@/hooks/use-auth"
@@ -86,81 +86,82 @@ const [attachmentPreviews, setAttachmentPreviews] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { executeWithAuth, loginPopupState, closeLoginPopup, handleLoginSuccess } = useAuthAction()
 const [publicGroups, setPublicGroups] = useState<{ grpId: number; grpName: string;hashtags:any[] ; url?: string }[]>([])
-  // Sample existing posts data
-  const existingPosts = [
-    {
-      id: 1,
-      title: "How to calculate royalty payments correctly?",
-      category: "Royalty Payments",
-      author: "Sarah Mitchell",
-      replies: 12,
-      url: "/posts/1",
-      timeAgo: "2 hours ago",
-    },
-    {
-      id: 2,
-      title: "Best practices for lease negotiation terms",
-      category: "Lease Negotiation",
-      author: "Marcus Rodriguez",
-      replies: 23,
-      url: "/posts/2",
-      timeAgo: "4 hours ago",
-    },
-    {
-      id: 3,
-      title: "Understanding mineral rights ownership",
-      category: "Mineral Rights",
-      author: "Jennifer Walsh",
-      replies: 8,
-      url: "/posts/3",
-      timeAgo: "6 hours ago",
-    },
-    {
-      id: 4,
-      title: "Royalty payment delays - what are my options?",
-      category: "Royalty Payments",
-      author: "David Chen",
-      replies: 15,
-      url: "/posts/4",
-      timeAgo: "8 hours ago",
-    },
-    {
-      id: 5,
-      title: "Lease negotiation tips for first-time landowners",
-      category: "Lease Negotiation",
-      author: "Texas Landman",
-      replies: 19,
-      url: "/posts/5",
-      timeAgo: "12 hours ago",
-    },
-    {
-      id: 6,
-      title: "How to verify drilling operations on my property?",
-      category: "Drilling Operations",
-      author: "Property Owner",
-      replies: 7,
-      url: "/posts/6",
-      timeAgo: "1 day ago",
-    },
-    {
-      id: 7,
-      title: "Tax implications of mineral rights income",
-      category: "Tax Questions",
-      author: "Tax Expert",
-      replies: 11,
-      url: "/posts/7",
-      timeAgo: "1 day ago",
-    },
-    {
-      id: 8,
-      title: "Legal issues with surface damage compensation",
-      category: "Legal Issues",
-      author: "Legal Eagle",
-      replies: 14,
-      url: "/posts/8",
-      timeAgo: "2 days ago",
-    },
-  ]
+const [recentThreads, setRecentThreads] = useState<any[]>([]); 
+// Sample existing posts data
+  // const existingPosts = [
+  //   {
+  //     id: 1,
+  //     title: "How to calculate royalty payments correctly?",
+  //     category: "Royalty Payments",
+  //     author: "Sarah Mitchell",
+  //     replies: 12,
+  //     url: "/posts/1",
+  //     timeAgo: "2 hours ago",
+  //   },
+  //   {
+  //     id: 2,
+  //     title: "Best practices for lease negotiation terms",
+  //     category: "Lease Negotiation",
+  //     author: "Marcus Rodriguez",
+  //     replies: 23,
+  //     url: "/posts/2",
+  //     timeAgo: "4 hours ago",
+  //   },
+  //   {
+  //     id: 3,
+  //     title: "Understanding mineral rights ownership",
+  //     category: "Mineral Rights",
+  //     author: "Jennifer Walsh",
+  //     replies: 8,
+  //     url: "/posts/3",
+  //     timeAgo: "6 hours ago",
+  //   },
+  //   {
+  //     id: 4,
+  //     title: "Royalty payment delays - what are my options?",
+  //     category: "Royalty Payments",
+  //     author: "David Chen",
+  //     replies: 15,
+  //     url: "/posts/4",
+  //     timeAgo: "8 hours ago",
+  //   },
+  //   {
+  //     id: 5,
+  //     title: "Lease negotiation tips for first-time landowners",
+  //     category: "Lease Negotiation",
+  //     author: "Texas Landman",
+  //     replies: 19,
+  //     url: "/posts/5",
+  //     timeAgo: "12 hours ago",
+  //   },
+  //   {
+  //     id: 6,
+  //     title: "How to verify drilling operations on my property?",
+  //     category: "Drilling Operations",
+  //     author: "Property Owner",
+  //     replies: 7,
+  //     url: "/posts/6",
+  //     timeAgo: "1 day ago",
+  //   },
+  //   {
+  //     id: 7,
+  //     title: "Tax implications of mineral rights income",
+  //     category: "Tax Questions",
+  //     author: "Tax Expert",
+  //     replies: 11,
+  //     url: "/posts/7",
+  //     timeAgo: "1 day ago",
+  //   },
+  //   {
+  //     id: 8,
+  //     title: "Legal issues with surface damage compensation",
+  //     category: "Legal Issues",
+  //     author: "Legal Eagle",
+  //     replies: 14,
+  //     url: "/posts/8",
+  //     timeAgo: "2 days ago",
+  //   },
+  // ]
 
   const navigationItems = [
     {
@@ -169,12 +170,6 @@ const [publicGroups, setPublicGroups] = useState<{ grpId: number; grpName: strin
       label: "Community",
       iconColor: "text-emerald-400",
     },
-    // {
-    //   href: "/home-feed",
-    //   icon: Home,
-    //   label: "Home Feed",
-    //   iconColor: "text-blue-400",
-    // },
     {
       href: "#",
       icon: Plus,
@@ -194,12 +189,6 @@ const [publicGroups, setPublicGroups] = useState<{ grpId: number; grpName: strin
       label: "My Groups",
       iconColor: "text-purple-400",
     },
-    // {
-    //   href: "/media",
-    //   icon: Camera,
-    //   label: "Media",
-    //   iconColor: "text-pink-400",
-    // },
     {
       href: "/member-request",
       icon: UserPlus,
@@ -208,21 +197,6 @@ const [publicGroups, setPublicGroups] = useState<{ grpId: number; grpName: strin
     },
   ]
 
-  // Sample public groups for categories
-  // const publicGroups = [
-  //   "Mineral Rights",
-  //   "Lease Negotiation",
-  //   "Royalty Payments",
-  //   "Drilling Operations",
-  //   "Legal Issues",
-  //   "Market Analysis",
-  //   "Property Management",
-  //   "Tax Questions",
-  //   "General Discussion",
-  //   "Environmental Impact",
-  //   "Technology & Innovation",
-  //   "Investment Opportunities",
-  // ]
 
   const [showAllCategories, setShowAllCategories] = useState(false)
   const defaultCategoriesCount = 4
@@ -230,54 +204,49 @@ const [publicGroups, setPublicGroups] = useState<{ grpId: number; grpName: strin
   // media
 const editorRef = useRef<HTMLDivElement>(null); // Add this at the top of your component
 
-const handleAttachmentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  const files = Array.from(e.target.files || []);
-  setAttachments(files);
 
-  files.forEach((file) => {
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      if (editorRef.current) {
-        editorRef.current.focus();
-        let html = "";
-        if (file.type.startsWith("image")) {
-          html = `<img src="${ev.target?.result}" alt="attachment" class="max-w-full my-2 rounded" />`;
-        } else if (file.type.startsWith("video")) {
-          html = `<video src="${ev.target?.result}" controls class="max-w-full my-2 rounded"></video>`;
-        }
-        document.execCommand("insertHTML", false, html);
-        setEditorContent(editorRef.current.innerHTML);
-      }
-    };
-    reader.readAsDataURL(file);
-  });
+const [recentThreadSuggestions, setRecentThreadSuggestions] = useState<any[]>([]);
+
+const handleTitleChange = (value: string) => {
+  setQuestionData({ ...questionData, title: value });
+
+  // Existing post suggestions...
+  // Now filter recent threads
+  if (value.trim().length > 0) {
+    const searchTerm = value.toLowerCase();
+    const threadSuggestions = recentThreads
+      .filter((thread) => thread.postQuestion?.toLowerCase().includes(searchTerm))
+      .slice(0, 6);
+    setRecentThreadSuggestions(threadSuggestions);
+  } else {
+    setRecentThreadSuggestions([]);
+  }
 };
 
+  // const handleTitleChange = (value: string) => {
+  //   setQuestionData({ ...questionData, title: value })
 
-  const handleTitleChange = (value: string) => {
-    setQuestionData({ ...questionData, title: value })
+  //   if (value.trim().length > 0) {
+  //     const searchTerm = value.toLowerCase()
+  //     const suggestions = existingPosts
+  //       .filter((post) => {
+  //         return post.title.toLowerCase().includes(searchTerm)
+  //       })
+  //       .sort((a, b) => {
+  //         const aIndex = a.title.toLowerCase().indexOf(searchTerm)
+  //         const bIndex = b.title.toLowerCase().indexOf(searchTerm)
+  //         if (aIndex !== bIndex) return aIndex - bIndex
+  //         return b.replies - a.replies
+  //       })
+  //       .slice(0, 6)
 
-    if (value.trim().length > 0) {
-      const searchTerm = value.toLowerCase()
-      const suggestions = existingPosts
-        .filter((post) => {
-          return post.title.toLowerCase().includes(searchTerm)
-        })
-        .sort((a, b) => {
-          const aIndex = a.title.toLowerCase().indexOf(searchTerm)
-          const bIndex = b.title.toLowerCase().indexOf(searchTerm)
-          if (aIndex !== bIndex) return aIndex - bIndex
-          return b.replies - a.replies
-        })
-        .slice(0, 6)
-
-      setAutocompleteSuggestions(suggestions)
-      setShowAutocomplete(suggestions.length > 0 && value.trim().length > 0)
-    } else {
-      setShowAutocomplete(false)
-      setAutocompleteSuggestions([])
-    }
-  }
+  //     setAutocompleteSuggestions(suggestions)
+  //     setShowAutocomplete(suggestions.length > 0 && value.trim().length > 0)
+  //   } else {
+  //     setShowAutocomplete(false)
+  //     setAutocompleteSuggestions([])
+  //   }
+  // }
 
   const handleSuggestionClick = (post: any) => {
     setShowAutocomplete(false)
@@ -285,60 +254,25 @@ const handleAttachmentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     window.location.href = post.url
   }
 
-//   const handleSubmitQuestion = async () => {
-//     setIsSubmitting(true)
+function timeAgo(dateString: string) {
+  const date = new Date(dateString);
+  const now = new Date();
+  const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
-//     try {
-//      const payload = {
-//       postType: "question",
-//       uId: uId, // Replace with actual user ID from context
-//       uname: userName, // Replace with actual username from context
-//       emailId: uEmailId, // Replace with actual user email from context
-//       title: questionData.title,
-//       content: editorContent,
-//       grpId: questionData.grpId, // Replace with actual group ID
-//       grpName: questionData.category || "Discussion",
-//       hashtags: questionData.hashtags || [],
-//     }
+  if (isNaN(seconds)) return ""; // Invalid date
 
-//       const response = await addQuestion(payload) 
- 
-//       if (response) {
-//         // console.log("Question submitted successfully:", payload)
-
-//         setQuestionData({
-//           title: "",
-//           content: "",
-//           category: "",
-//           grpId: 0, // Reset group ID
-//           hashtags: [],
-//           currentTag: "",
-//         })
-//         setEditorContent("")
-//         setShowAutocomplete(false)
-//         setAutocompleteSuggestions([])
-//         setShowAllCategories(false)
-//         setAskQuestionOpen(false)
-// toast.message("Your question has been posted successfully."
-         
-//         )
-//         //  toast({
-//         //   title: "Question posted",
-//         //   description: "Your question has been posted successfully.",
-//         // })
-//       } else {
-//         throw new Error("Failed to submit question")
-//       }
-//     } catch (error) {
-//       console.error("Error submitting question:", error)
-//     toast.message("Your question has been posted successfully."
-         
-//         )
-//     } finally {
-//       setIsSubmitting(false)
-//     }
-//   }
-
+  if (seconds < 60) return "Just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes} min ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days} day${days > 1 ? "s" : ""} ago`;
+  const months = Math.floor(days / 30);
+  if (months < 12) return `${months} month${months > 1 ? "s" : ""} ago`;
+  const years = Math.floor(months / 12);
+  return `${years} y ago`;
+}
 // media
 const handleSubmitQuestion = async () => {
   setIsSubmitting(true);
@@ -362,7 +296,7 @@ const handleSubmitQuestion = async () => {
     formData.append("grpId", String(questionData.grpId));
     formData.append("url", String(questionData.url));
     formData.append("grpName", questionData.category || "Discussion");
-    formData.append("hashtags", JSON.stringify(questionData.hashtags || []));
+    formData.append("hashtags", (questionData.hashtags || []).join(","));
 
     attachments.forEach((file) => {
       formData.append("userImage", file);
@@ -390,8 +324,6 @@ const handleSubmitQuestion = async () => {
     const content = e.currentTarget.innerHTML
     setEditorContent(content)
   }
-
-  // const isFormValid = questionData.title.trim() && editorContent.trim() && questionData.category
 
   // media
   const isFormValid =
@@ -455,16 +387,20 @@ const handleSubmitQuestion = async () => {
   }
   // Fetch public groups only when opening the Ask Question dialog
 const handleOpenAskQuestion = async () => {
-  // Only fetch if not already loaded
-  // if (publicGroups.length === 0) {
     const response = await getPublicGroups()
     setPublicGroups(
       Array.isArray(response)
         ? response.map((g: any) => ({ grpId: g.grpId, grpName: g.grpName,hashtags:g.hashtags,url:g.url }))
         : []
     )
-    console.log("Public groups fetched:", response)
-  // }
+    
+  // Fetch recent threads
+  try {
+    const recent = await getRecentActivity();
+    setRecentThreads(Array.isArray(recent) ? recent : []);
+  } catch (err) {
+    setRecentThreads([]);
+  }
   setAskQuestionOpen(true)
 }
 // image 
@@ -544,12 +480,6 @@ const fileInputRef = useRef<HTMLInputElement>(null);
     }
   }}
       >
-          {/* <DialogTrigger asChild>
-            <Button onClick={() => executeWithAuth(() => setAskQuestionOpen(true), "ask a question")} className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold">
-              <Plus className="h-5 w-5 mr-2" fill="currentColor" />
-              Ask a Question
-            </Button>
-          </DialogTrigger> */}
           <DialogContent className="max-w-5xl w-[100vw] sm:w-[100vw] lg:w-[1000px] max-h-[95vh] overflow-hidden pt-2 gap-0">
             <DialogHeader className="flex flex-row items-center gap-x-2 pb-0">
               <DialogTitle className="text-lg font-semibold">Ask a Question</DialogTitle>
@@ -823,71 +753,71 @@ const fileInputRef = useRef<HTMLInputElement>(null);
                 </div>
 
                 {/* Live Search Results */}
-                {showAutocomplete && autocompleteSuggestions.length > 0 && (
+                {recentThreadSuggestions.length > 0 && (
                   <div className="mb-4">
-                    <div className="flex items-center gap-2 mb-2">
+                    {/* <div className="flex items-center gap-2 mb-2">
                       <Search className="h-3 w-3 lg:h-4 lg:w-4 text-blue-600" />
                       <span className="text-xs lg:text-sm font-medium text-blue-900">Matching Posts</span>
-                    </div>
-                    <div className="space-y-2">
-                      {autocompleteSuggestions.map((post) => (
+                    </div> */}
+                    {/* <div className="space-y-2">
+                      {autocompleteSuggestions.map((thread) => (
                         <button
-                          key={post.id}
-                          onClick={() => handleSuggestionClick(post)}
+                          key={thread.threadId}
+                          onClick={() => window.location.href = `/${thread.url}/${thread.groupsName}/${thread.threadId}`}
                           className="w-full text-left p-2 lg:p-3 bg-white rounded-lg border hover:border-blue-300 hover:bg-blue-50 transition-colors group"
                         >
                           <div className="space-y-1">
                             <h4 className="font-medium text-gray-900 text-xs lg:text-sm leading-tight group-hover:text-blue-900">
-                              {highlightMatch(post.title, questionData.title)}
+                              {highlightMatch(thread.postQuestion, questionData.title)}
                             </h4>
                             <div className="flex items-center gap-1 lg:gap-2 text-xs text-gray-500">
-                              <Badge variant="outline" className="text-xs px-1 lg:px-2 py-0.5">
-                                {post.category}
-                              </Badge>
-                              <span>by {post.author}</span>
+                             
+                              <span>by {thread.userName}</span>
                               <span>•</span>
-                              <span>{post.replies} replies</span>
+                              <span>{thread.NofOfReplies} replies</span>
                             </div>
                           </div>
                           <ExternalLink className="h-2 w-2 lg:h-3 lg:w-3 text-gray-400 group-hover:text-blue-600 float-right mt-1" />
                         </button>
                       ))}
-                    </div>
-                    <div className="border-t border-gray-200 mt-4 pt-4">
+                    </div> */}
+                    {/* <div className="border-t border-gray-200 mt-4 pt-4">
                       <span className="text-xs lg:text-sm font-medium text-gray-900">All Recent Posts</span>
-                    </div>
+                    </div> */}
                   </div>
                 )}
 
-                {/* Recent Posts List */}
-                <div className="space-y-2 overflow-y-auto max-h-[400px]">
-                  {existingPosts.slice(0, 8).map((post) => (
-                    <button
-                      key={post.id}
-                      onClick={() => handleSuggestionClick(post)}
-                      className="w-full text-left p-2 lg:p-3 bg-white rounded-lg border hover:border-gray-300 hover:bg-gray-50 transition-colors group"
-                    >
-                      <div className="space-y-1">
-                        <h4 className="font-medium text-gray-900 text-xs lg:text-sm leading-tight group-hover:text-gray-700">
-                          {post.title}
-                        </h4>
-                        <div className="flex items-center gap-1 lg:gap-2 text-xs text-gray-500">
-                          <Badge variant="outline" className="text-xs px-1 lg:px-2 py-0.5">
-                            {post.category}
-                          </Badge>
-                          <span>•</span>
-                          <span>{post.replies} replies</span>
-                          <span>•</span>
-                          <div className="flex items-center gap-1">
-                            <Clock className="h-2 w-2 lg:h-3 lg:w-3" />
-                            <span>{post.timeAgo}</span>
-                          </div>
-                        </div>
-                      </div>
-                      <ExternalLink className="h-2 w-2 lg:h-3 lg:w-3 text-gray-400 group-hover:text-gray-600 float-right mt-1" />
-                    </button>
-                  ))}
-                </div>
+         {/* Recent Threads List from API */}
+<div className="space-y-2 overflow-y-auto max-h-[400px]">
+  {(questionData.title.trim() && recentThreadSuggestions.length > 0
+    ? recentThreadSuggestions
+    : recentThreads.slice(0, 8)
+  ).map((thread) => (
+    <button
+      key={thread.threadId}
+      onClick={() => window.location.href = `/groups/${thread.groupsName}/${thread.threadId}`}
+      className="w-full text-left p-2 lg:p-3 bg-white rounded-lg border hover:border-gray-300 hover:bg-gray-50 transition-colors group"
+    >
+      <div className="space-y-1">
+        <h4 className="font-medium text-gray-900 text-xs lg:text-sm leading-tight group-hover:text-gray-700">
+          {questionData.title.trim() && recentThreadSuggestions.length > 0
+            ? highlightMatch(thread.postQuestion, questionData.title)
+            : thread.postQuestion}
+        </h4>
+        <div className="flex items-center gap-1 lg:gap-2 text-xs text-gray-500">
+          <span>•</span>
+          <span>{thread.NofOfReplies} replies</span>
+          <span>•</span>
+          <div className="flex items-center gap-1">
+            <Clock className="h-2 w-2 lg:h-3 lg:w-3" />
+            <span>{thread.lastActivity ? timeAgo(thread.lastActivity) : ""}</span>
+          </div>
+        </div>
+      </div>
+      <ExternalLink className="h-2 w-2 lg:h-3 lg:w-3 text-gray-400 group-hover:text-gray-600 float-right mt-1" />
+    </button>
+  ))}
+</div>
               </div>
             </div>
 

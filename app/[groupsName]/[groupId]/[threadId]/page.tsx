@@ -690,23 +690,12 @@ const handleAcceptAnswer = async (postId: number) => {
                           <Badge variant="secondary" className="bg-blue-100 text-blue-800 text-xs">
                             Verified
                           </Badge>
-                        {/* )} */}
-                        {/* <div className="flex items-center gap-1">
-                          <Star className="h-3 w-3 text-yellow-500" fill="currentColor" />
-                          <span className="text-xs text-gray-500">{postData.author.reputation}</span>
-                        </div> */}
+                       
                       </div>
                       <div className="flex flex-wrap items-center gap-2 text-sm text-gray-500">
-                        {/* <button
-                          onClick={() => handleUserClick(threadDetail.posts[0]?.uname)}
-                          className="hover:text-blue-600 transition-colors"
-                        >
-                          {threadDetail.posts[0]?.emailId}
-                        </button>
-                        <span>•</span> */}
+                        
                         <span>{timeAgo(threadDetail.createdAt)}</span>
-                        {/* <span>•</span>
-                        <span>{postData.engagement.views} views</span> */}
+                       
                       </div>
                     </div>
                   </div>
@@ -793,11 +782,19 @@ const handleAcceptAnswer = async (postId: number) => {
                       className="prose prose-gray max-w-none mb-4"
                       dangerouslySetInnerHTML={{ __html: threadDetail.posts[0]?.content }}
                     />
-
+{threadDetail.posts[0]?.fileURL && threadDetail.posts[0].fileURL.startsWith("http") && (
+  <div className="mb-4">
+    <img
+      src={threadDetail.posts[0].fileURL}
+      alt="Post Attachment"
+      className="max-w-full rounded-lg border"
+    />
+  </div>
+)}
                     {/* Tags */}
-                  <div className="flex flex-wrap gap-2 mb-4">
-  {Array.isArray(threadDetail.hashtags) && threadDetail.hashtags.length > 0 ? (
-    threadDetail.hashtags.map((tag, idx) => (
+                <div className="flex flex-wrap gap-2 mb-4">
+  {Array.isArray(threadDetail.hashtags) && threadDetail.hashtags.length > 0 &&
+    threadDetail.hashtags.map((tag: string, idx: number) => (
       <Badge
         key={tag + idx}
         variant="secondary"
@@ -806,7 +803,7 @@ const handleAcceptAnswer = async (postId: number) => {
         {tag}
       </Badge>
     ))
-  ) : null}
+  }
 </div>
 
                     {/* Question Actions */}

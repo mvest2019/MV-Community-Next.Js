@@ -279,15 +279,10 @@ function formatUrlTitle(url: string) {
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex items-start gap-3 flex-1">
                     {/* 🖼 Avatar or fallback with user initial */}
-                    <Avatar>
-                      {thread.userImage && thread.userImage.trim() !== "" ? (
-                        <AvatarImage src={thread.userImage} />
-                      ) : (
-                        <AvatarFallback className="bg-purple-600 text-white text-lg font-bold">
-                          {thread.userName ? thread.userName[0] : ""}
-                        </AvatarFallback>
-                      )}
-                    </Avatar>
+                    <Avatar className="h-12 w-12">
+                                   {/* <AvatarImage src={post.user.avatar || "/placeholder.svg"} /> */}
+                                   <AvatarFallback>{thread.userName[0]}</AvatarFallback>
+                                 </Avatar>
 
                     {/* 👤 Name & Meta */}
                     <div className="flex-1 min-w-0">
