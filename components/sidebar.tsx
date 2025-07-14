@@ -429,7 +429,18 @@ const fileInputRef = useRef<HTMLInputElement>(null);
 
       {/* Navigation */}
       <nav className="flex-1 p-4 space-y-2">
-        {navigationItems.map((item) => {
+        {navigationItems
+        .filter(item => {
+      // Only show "My Groups" and "Follow Request" if user is logged in
+      if (
+        (item.label === "My Groups" || item.label === "Follow Request") &&
+        !isLoggedIn
+      ) {
+        return false;
+      }
+      return true;
+    })
+        .map((item) => {
           const Icon = item.icon
           const isActive = pathname === item.href
 
