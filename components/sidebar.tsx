@@ -32,6 +32,7 @@ import { addQuestion, getPublicGroups } from "@/services/service"
 import { useAuthAction } from "@/hooks/use-auth-action"
 import { LoginPopup } from "./login-popup"
 import { useAuth } from "@/hooks/use-auth"
+import { url } from "inspector"
 
 interface SidebarProps {
   className?: string
@@ -49,6 +50,7 @@ export function Sidebar({ className }: SidebarProps) {
     grpId: 0, // Replace with actual group ID if needed
     hashtags: [] as string[],
     currentTag: "",
+    url: "",
   })
   const { isLoggedIn } = useAuth(); 
   const userStr = typeof window !== "undefined" ? localStorage.getItem("user") : null;
@@ -83,7 +85,7 @@ const [attachmentPreviews, setAttachmentPreviews] = useState<string[]>([]);
    const [editorContent, setEditorContent] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { executeWithAuth, loginPopupState, closeLoginPopup, handleLoginSuccess } = useAuthAction()
-const [publicGroups, setPublicGroups] = useState<{ grpId: number; grpName: string;hashtags:any[] }[]>([])
+const [publicGroups, setPublicGroups] = useState<{ grpId: number; grpName: string;hashtags:any[] ; url?: string }[]>([])
   // Sample existing posts data
   const existingPosts = [
     {
@@ -192,12 +194,12 @@ const [publicGroups, setPublicGroups] = useState<{ grpId: number; grpName: strin
       label: "My Groups",
       iconColor: "text-purple-400",
     },
-    {
-      href: "/media",
-      icon: Camera,
-      label: "Media",
-      iconColor: "text-pink-400",
-    },
+    // {
+    //   href: "/media",
+    //   icon: Camera,
+    //   label: "Media",
+    //   iconColor: "text-pink-400",
+    // },
     {
       href: "/member-request",
       icon: UserPlus,
@@ -358,6 +360,7 @@ const handleSubmitQuestion = async () => {
     formData.append("title", questionData.title);
     formData.append("content", plainTextContent);
     formData.append("grpId", String(questionData.grpId));
+    formData.append("url", String(questionData.url));
     formData.append("grpName", questionData.category || "Discussion");
     formData.append("hashtags", JSON.stringify(questionData.hashtags || []));
 
@@ -404,6 +407,7 @@ const handleSubmitQuestion = async () => {
       grpId: 0, // Reset group ID
       hashtags: [],
       currentTag: "",
+      url: "",
     })
     setEditorContent("")
     const editor = document.getElementById("rich-editor")
@@ -456,9 +460,10 @@ const handleOpenAskQuestion = async () => {
     const response = await getPublicGroups()
     setPublicGroups(
       Array.isArray(response)
-        ? response.map((g: any) => ({ grpId: g.grpId, grpName: g.grpName,hashtags:g.hashtags }))
+        ? response.map((g: any) => ({ grpId: g.grpId, grpName: g.grpName,hashtags:g.hashtags,url:g.url }))
         : []
     )
+    console.log("Public groups fetched:", response)
   // }
   setAskQuestionOpen(true)
 }
@@ -783,7 +788,7 @@ const fileInputRef = useRef<HTMLInputElement>(null);
     <button
       key={group.grpId}
       type="button"
-      onClick={() => setQuestionData({ ...questionData, category: group.grpName, grpId: group.grpId ,hashtags: group.hashtags || []})}
+      onClick={() => setQuestionData({ ...questionData, category: group.grpName, grpId: group.grpId ,hashtags: group.hashtags || [], url: group.url || "",})}
       className={`px-3 py-2 text-xs lg:text-sm rounded-lg border transition-colors text-left ${
         questionData.category === group.grpName
           ? "bg-orange-500 text-white border-orange-500"

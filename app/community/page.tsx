@@ -215,28 +215,28 @@ console.log("Recent Activity API Response:", recentActivity);
               <div className="sticky top-6 space-y-4">
                   {/* Community Stats */}
                 <Card >
-                  <CardHeader className="pb-3 p-3">
+                  <CardHeader className="pb-3 p-3 pb-2">
                     <h3 className="font-semibold text-gray-900">Community Stats</h3>
                   </CardHeader>
                   <CardContent className="pt-0">
                     <div className="grid grid-cols-2 gap-6">
                       <div className="flex items-center space-x-3">
-                        <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-3 rounded-full flex-shrink-0">
+                        {/* <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-3 rounded-full flex-shrink-0">
                           <Users className="h-6 w-6 text-white" />
-                        </div>
+                        </div> */}
                         <div>
-                          <div className="text-sm font-medium text-blue-700 mb-1">Active Members</div>
+                          <div className="text-[1.2rem] font-semibold text-blue-700 mb-1">Active Members</div>
                           <div className="text-2xl font-bold text-blue-900">
                             {communityStats.activeMembers.toLocaleString()}
                           </div>
                         </div>
                       </div>
                       <div className="flex items-center space-x-3">
-                        <div className="bg-gradient-to-r from-green-500 to-green-600 p-3 rounded-full flex-shrink-0">
+                        {/* <div className="bg-gradient-to-r from-green-500 to-green-600 p-3 rounded-full flex-shrink-0">
                           <MessageSquare className="h-6 w-6 text-white" />
-                        </div>
+                        </div> */}
                         <div>
-                          <div className="text-sm font-medium text-green-700 mb-1">Threads</div>
+                          <div className="text-[1.2rem] font-semibold text-green-700 mb-1">Threads</div>
                           <div className="text-2xl font-bold text-green-900">
                             {communityStats.threadCount.toLocaleString()}
                           </div>

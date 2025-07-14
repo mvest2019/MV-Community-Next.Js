@@ -12,6 +12,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { useState } from "react"
 import { toast } from "sonner"
 import { voteThreadPost } from "@/services/threadId-service";
+import Link from "next/link"
 
 export interface Post {
   threadId: string
@@ -27,6 +28,8 @@ export interface Post {
   NofOfComments: number
   NofOfViews: number
   _id: number
+  groupsName: string
+  url: string
 }
 
 interface PostCardProps {
@@ -97,6 +100,11 @@ function timeAgo(dateString: string) {
 }
 
   return (
+<Link
+  href={`/${post.url}/${post.groupsName}/${post.threadId}`}
+  className="block"
+  style={{ textDecoration: "none" }}
+>
     <Card>
       <CardContent className="p-0">
         {/* Post Header */}
@@ -134,7 +142,7 @@ function timeAgo(dateString: string) {
         {/* Post Content */}
         <div className="px-4 pb-3">
            <div className="font-bold text-black mb-1">{post.postQuestion}</div>
-         <p className="text-gray-800 leading-relaxed whitespace-pre-line clamp-3">
+       <p className="text-gray-800 leading-relaxed whitespace-pre-line line-clamp-2">
   {post.lastReply}
 </p>  </div>
 
@@ -149,58 +157,10 @@ function timeAgo(dateString: string) {
           </div>
         )}
 
-        {/* Post Stats */}
-        {/* <div className="px-4 py-2 border-t border-b bg-gray-50">
-          <div className="flex items-center justify-between text-sm text-gray-600">
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-1">
-                <div className="flex -space-x-1">
-                  <div className="h-5 w-5 bg-blue-500 rounded-full flex items-center justify-center">
-                    <ThumbsUp className="h-3 w-3 text-white" />
-                  </div>
-                </div>
-                <span>{localLikes} likes</span>
-              </div>
-              <span>{post.comments.length} comments</span>
-              <span>{post.shares} reposts</span>
-            </div>
-          </div>
-        </div> */}
 
         {/* Post Actions */}
         <div className="p-3 border-t border-b bg-gray-50">
-          {/* <div className="flex items-center justify-between">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleLike}
-              className={`flex-1 ${liked ? "text-blue-600" : "text-gray-600"} hover:bg-gray-100`}
-            >
-              <ThumbsUp className={`h-5 w-5 mr-2 ${liked ? "fill-current" : ""}`} />
-              {localLikes}
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowComments(!showComments)}
-              className="flex-1 text-gray-600 hover:bg-gray-100"
-            >
-              <MessageCircle className="h-5 w-5 mr-2" />
-              {post.NofOfComments}
-            </Button>
-            <Button variant="ghost" size="sm" className="flex-1 text-gray-600 hover:bg-gray-100">
-        <Button variant="ghost" size="sm" className="flex-1 text-gray-600 hover:bg-gray-100">
-<Button
-  variant="ghost"
-  size="sm"
-  className="flex-1 text-gray-600 hover:bg-gray-100"
->
-  <CornerUpRight className="h-5 w-5 mr-2" />
-  {post.NofOfReplies}
-</Button>
-</Button>
-            </Button>
-          </div> */}
+         
 
 <div className="flex items-center justify-between px-4 pb-3 pt-1 border-t border-gray-100">
   {/* Left side: Like, Comment, Reply */}
@@ -276,5 +236,6 @@ function timeAgo(dateString: string) {
         </div>
       </CardContent>
     </Card>
+    </Link>
   )
 }
