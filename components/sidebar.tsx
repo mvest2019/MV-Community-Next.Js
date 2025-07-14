@@ -296,8 +296,12 @@ const handleSubmitQuestion = async () => {
     formData.append("grpId", String(questionData.grpId));
     formData.append("url", String(questionData.url));
     formData.append("grpName", questionData.category || "Discussion");
-    formData.append("hashtags", (questionData.hashtags || []).join(","));
-
+   formData.append(
+  "hashtags",
+  (questionData.hashtags || [])
+    .map(tag => tag.startsWith("#") ? tag : `#${tag}`)
+    .join(",")
+);
     attachments.forEach((file) => {
       formData.append("userImage", file);
     });
