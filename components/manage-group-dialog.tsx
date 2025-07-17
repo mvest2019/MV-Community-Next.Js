@@ -493,7 +493,7 @@ export function ManageGroupDialog({ group, otherGroups }: ManageGroupDialogProps
             </div>
 
             {/* Group Actions Section - Removed title and border */}
-            <div className="mb-4">
+            {/* <div className="mb-4">
               <div className="flex flex-col sm:flex-row gap-3">
                 <Button
                   variant="outline"
@@ -545,14 +545,14 @@ export function ManageGroupDialog({ group, otherGroups }: ManageGroupDialogProps
                   </Button>
                 </div>
               </div>
-            </div>
+            </div> */}
           </div>
 
-          <DialogFooter className="px-6 py-4 border-t">
+          {/* <DialogFooter className="px-6 py-4 border-t">
             <Button variant="outline" onClick={() => setIsOpen(false)}>
               Close
             </Button>
-          </DialogFooter>
+          </DialogFooter> */}
         </DialogContent>
       </Dialog>
  {/* Photo Preview Dialog */}

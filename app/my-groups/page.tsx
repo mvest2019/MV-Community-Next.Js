@@ -7,12 +7,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { UserMinus, Eye, Lock, Users, Plus } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { AppLayout } from "@/components/app-layout"
 import { ManageGroupDialog } from "@/components/manage-group-dialog"
+import { getPrivateGroupByCode } from "@/services/service"
 
 export default function MyGroupsPage() {
   const [confirmLeave, setConfirmLeave] = useState<number | null>(null)
+    const [groupDetails, setGroupDetails] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   // Sample created groups data - only groups created by the user
   const [createdGroups, setCreatedGroups] = useState([
@@ -141,89 +145,133 @@ export default function MyGroupsPage() {
   const handleCardClick = (groupId: number) => {
     window.location.href = `/groups/${groupId}`
   }
+  const prvgrpCode = "PRV_1300";
+useEffect(() => {
+    const fetchGroupDetails = async () => {
+      setLoading(true);
+      setError("");
+      try {
+        const data = await getPrivateGroupByCode(prvgrpCode);
+        console.log("Fetched group details:", data);
+        setGroupDetails(data.groups || []);
+      } catch (err: any) {
+        setError(err.message || "Failed to fetch group details");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  return (
+    fetchGroupDetails();
+  }, [prvgrpCode]);
+  
+    // console.log("groupDetails for rendering:", groupDetails);
+ return (
     <AppLayout pageTitle="My Groups" searchPlaceholder="Search groups...">
       <div className="p-3 sm:p-4 lg:p-6">
         <div className="max-w-6xl mx-auto">
-          {/* Subtitle */}
-          <div className="mb-6">
-            <p className="text-gray-600">Groups that you have created and manage</p>
-          </div>
-
           {/* Groups Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            {createdGroups.map((group) => (
-              <Card
-                key={group.id}
-                className="hover:shadow-lg transition-shadow cursor-pointer group"
-                onClick={() => handleCardClick(group.id)}
-              >
-                <CardContent className="p-3 sm:p-4">
-                  {/* Group Image */}
-                  <div className="relative h-24 sm:h-32 bg-gradient-to-br from-blue-500 to-purple-600 rounded-t-lg overflow-hidden">
-                    <Image
-                      src={group.avatar || "/placeholder.svg"}
-                      alt={group.name}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                    <div className="absolute inset-0 bg-black/20"></div>
-                    <div className="absolute top-3 right-3 flex gap-2">
-                      {group.privacy === "Private" && (
-                        <Badge
-                          variant="secondary"
-                          className="bg-red-500/90 text-white border-0 text-xs px-2 py-1 sm:px-3 sm:py-1"
-                        >
-                          <Lock className="h-3 w-3 mr-1" />
-                          Private
-                        </Badge>
-                      )}
-                      <Badge
-                        variant="secondary"
-                        className="bg-green-500/90 text-white border-0 text-xs px-2 py-1 sm:px-3 sm:py-1"
-                      >
-                        Creator
-                      </Badge>
-                    </div>
-                  </div>
-
-                  {/* Group Content */}
-                  <div className="p-4">
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-base sm:text-lg text-gray-900 break-words mb-1">
-                          {group.name}
-                        </h3>
-                        <p className="text-xs sm:text-sm text-gray-600 break-words line-clamp-2 mb-2">
-                          {group.description}
-                        </p>
-                        <div className="flex items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600">
-                          <div className="flex items-center gap-1">
-                            <Users className="h-4 w-4" />
-                            <span>{group.memberCount}</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <span>{group.postCount} posts</span>
-                          </div>
+          {loading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+    {[...Array(3)].map((_, idx) => (
+      <Card key={idx} className="animate-pulse">
+        <CardContent className="p-0 sm:p-0">
+          {/* Match the height and structure of your data card */}
+          <div className="relative h-24 sm:h-32 bg-gray-200 rounded-t-lg" />
+          <div className="p-4">
+            <div className="h-5 bg-gray-200 rounded w-2/3 mb-2" />
+            <div className="h-3 bg-gray-200 rounded w-1/2 mb-2" />
+            <div className="flex items-center gap-2 sm:gap-4 mb-2">
+              <div className="h-4 w-12 bg-gray-200 rounded" />
+              <div className="h-4 w-16 bg-gray-200 rounded" />
+            </div>
+            <div className="flex flex-wrap gap-1 mt-2 mb-2">
+              <div className="h-4 w-16 bg-gray-200 rounded" />
+              <div className="h-4 w-10 bg-gray-200 rounded" />
+            </div>
+            {/* Simulate action buttons area */}
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-2 mt-4">
+              <div className="h-8 bg-gray-200 rounded w-full sm:w-1/2" />
+              <div className="h-8 bg-gray-200 rounded w-full sm:w-1/2" />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    ))}
+  </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                {Array.isArray(groupDetails) && groupDetails.map((group) => (
+                  <Card
+                    key={group.prvgrpId}
+                    className="hover:shadow-lg transition-shadow cursor-pointer group"
+                    onClick={() => handleCardClick(group.prvgrpId)}
+                  >
+                    <CardContent className="p-0 sm:p-0">
+                      {/* Group Image */}
+                      <div className="relative h-24 sm:h-32 bg-gradient-to-br from-blue-500 to-purple-600 rounded-t-lg overflow-hidden">
+                        <Image
+                          src={group.grpImg || "/placeholder.svg"}
+                          alt={group.prvgrpName}
+                          fill
+                          className="object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                        <div className="absolute inset-0 bg-black/20"></div>
+                        <div className="absolute top-3 right-3 flex gap-2">
+                          {group.uRole && (
+                            <Badge
+                              variant="secondary"
+                              className="bg-green-500/90 text-white border-0 text-xs px-2 py-1 sm:px-3 sm:py-1"
+                            >
+                              {group.uRole === "SuperAdmin" ? "Admin" : group.uRole}
+                            </Badge>
+                          )}
                         </div>
                       </div>
-                    </div>
 
-                    {/* Action Buttons */}
-                    <div className="flex flex-col sm:flex-row gap-2 sm:gap-2">
-                      <Button
-                        variant="outline"
-                        className="w-full sm:flex-1 text-xs sm:text-sm"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          window.location.href = `/groups/${group.id}`
-                        }}
-                      >
-                        <Eye className="h-4 w-4 mr-2" />
-                        View Group
-                      </Button>
-                      {group.privacy === "Private" && group.isCreator && (
+                      {/* Group Content */}
+                      <div className="p-4">
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold text-base sm:text-lg text-gray-900 break-words mb-1">
+                              {group.prvgrpName}
+                            </h3>
+                            <p className="text-xs sm:text-sm text-gray-600 break-words line-clamp-2 mb-2">
+                              {group.prvgrpDesc}
+                            </p>
+                            <div className="flex items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600">
+                              <div className="flex items-center gap-1">
+                                <Users className="h-4 w-4" />
+                                <span>{group.userCount}</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <span>{group.postCount} posts</span>
+                              </div>
+                            </div>
+                            <div className="flex flex-wrap gap-1 mt-2">
+                              {Array.isArray(group.hashTags) && group.hashTags.map((tag: string, idx: number) => (
+                                <Badge key={idx} variant="secondary" className="bg-blue-100 text-blue-700 border-0 text-xs px-2 py-1">
+                                  {tag}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex flex-col sm:flex-row gap-2 sm:gap-2">
+                          <Button
+                            variant="outline"
+                            className="w-full sm:flex-1 text-xs sm:text-sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              window.location.href = `/groups/${group.prvgrpId}`;
+                            }}
+                          >
+                            <Eye className="h-4 w-4 mr-2" />
+                            View Group
+                          </Button>
+                            {group.uRole === "SuperAdmin" && (
                         <div onClick={(e) => e.stopPropagation()}>
                           <ManageGroupDialog
                             group={group}
@@ -231,71 +279,72 @@ export default function MyGroupsPage() {
                           />
                         </div>
                       )}
-                      <Dialog open={confirmLeave === group.id} onOpenChange={(open) => !open && setConfirmLeave(null)}>
-                        <DialogTrigger asChild>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setConfirmLeave(group.id)
-                            }}
-                          >
-                            <UserMinus className="h-4 w-4" />
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent onClick={(e) => e.stopPropagation()}>
-                          <DialogHeader>
-                            <DialogTitle>Delete Group</DialogTitle>
-                          </DialogHeader>
-                          <div className="py-0">
-                            <p className="text-gray-600">
-                              Are you sure you want to delete <span className="font-semibold">{group.name}</span>?
-                              <span className="text-red-600 block mt-2">
-                                ⚠️ This action cannot be undone. All content and members will be permanently removed.
-                              </span>
-                            </p>
-                          </div>
-                          <DialogFooter>
-                            <Button variant="outline" onClick={() => setConfirmLeave(null)}>
-                              Cancel
-                            </Button>
-                            <Button
-                              variant="destructive"
-                              onClick={() => handleDeleteGroup(group.id)}
-                              className="bg-red-600 hover:bg-red-700"
-                            >
-                              Delete Group
-                            </Button>
-                          </DialogFooter>
-                        </DialogContent>
-                      </Dialog>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          {/* Empty State */}
-          {createdGroups.length === 0 && (
-            <Card className="text-center py-12">
-              <CardContent>
-                <Users className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">No Groups Created</h3>
-                <p className="text-gray-600 mb-4">You haven't created any groups yet. Start building your community!</p>
-                <Button asChild>
-                  <Link href="/community">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create New Group
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
+                          <Dialog open={confirmLeave === group.prvgrpId} onOpenChange={(open) => !open && setConfirmLeave(null)}>
+                            <DialogTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setConfirmLeave(group.prvgrpId);
+                                }}
+                              >
+                                <UserMinus className="h-4 w-4" />
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent onClick={(e) => e.stopPropagation()}>
+                              <DialogHeader>
+                                <DialogTitle>Delete Group</DialogTitle>
+                              </DialogHeader>
+                              <div className="py-0">
+                                <p className="text-gray-600">
+                                  Are you sure you want to delete <span className="font-semibold">{group.prvgrpName}</span>?
+                                  <span className="text-red-600 block mt-2">
+                                    ⚠️ This action cannot be undone. All content and members will be permanently removed.
+                                  </span>
+                                </p>
+                              </div>
+                              <DialogFooter>
+                                <Button variant="outline" onClick={() => setConfirmLeave(null)}>
+                                  Cancel
+                                </Button>
+                                <Button
+                                  variant="destructive"
+                                  onClick={() => handleDeleteGroup(group.prvgrpId)}
+                                  className="bg-red-600 hover:bg-red-700"
+                                >
+                                  Delete Group
+                                </Button>
+                              </DialogFooter>
+                            </DialogContent>
+                          </Dialog>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+              {/* Empty State */}
+            {!loading && Array.isArray(groupDetails) && groupDetails.length === 0 && (
+  <Card className="text-center py-12">
+    <CardContent>
+      <Users className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+      <h3 className="text-lg font-semibold text-gray-900 mb-2">No Groups Created</h3>
+      <p className="text-gray-600 mb-4">You haven't created any groups yet. Start building your community!</p>
+      {/* <Button asChild>
+        <Link href="/community">
+          <Plus className="h-4 w-4 mr-2" />
+          Create New Group
+        </Link>
+      </Button> */}
+    </CardContent>
+  </Card>
+)}
+            </>
           )}
         </div>
       </div>
     </AppLayout>
-  )
+  );
 }

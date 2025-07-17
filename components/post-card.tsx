@@ -28,6 +28,7 @@ export interface Post {
   NofOfComments: number
   NofOfViews: number
   _id: number
+  grpId: number
   groupsName: string
   url: string
 }
@@ -101,7 +102,7 @@ function timeAgo(dateString: string) {
 
   return (
 <Link
-  href={`/${post.url}/${post.groupsName}/${post.threadId}`}
+  href={`/${post.url}/${post.grpId}/${post.threadId}`}
   className="block"
   style={{ textDecoration: "none" }}
 >

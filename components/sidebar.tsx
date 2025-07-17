@@ -28,11 +28,12 @@ import { toast } from "sonner"
 // import { useToast } from "@/components/ui/use-toast"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Bold, Italic, Underline, List, ListOrdered, Link2 } from "lucide-react"
-import { addQuestion, getPublicGroups, getRecentActivity } from "@/services/service"
+import { addQuestion, createPrivateGroup, getPrivateGroupByCode, getPublicGroups, getRecentActivity } from "@/services/service"
 import { useAuthAction } from "@/hooks/use-auth-action"
 import { LoginPopup } from "./login-popup"
 import { useAuth } from "@/hooks/use-auth"
 import { url } from "inspector"
+import { CreateGroupPopup } from "./popups/CreateGroupPopup"
 
 interface SidebarProps {
   className?: string
@@ -69,6 +70,7 @@ const userName = user ? `${user.f_name} ${user.l_name}` : "";
     privacy: "private",
     category: "Regional",
     body: "Join our new private group!",
+    hashtags: [] as string[], // <-- Add this line
   })
   // media
 const getPlainText = (html: string) => {
@@ -87,81 +89,7 @@ const [attachmentPreviews, setAttachmentPreviews] = useState<string[]>([]);
   const { executeWithAuth, loginPopupState, closeLoginPopup, handleLoginSuccess } = useAuthAction()
 const [publicGroups, setPublicGroups] = useState<{ grpId: number; grpName: string;hashtags:any[] ; url?: string }[]>([])
 const [recentThreads, setRecentThreads] = useState<any[]>([]); 
-// Sample existing posts data
-  // const existingPosts = [
-  //   {
-  //     id: 1,
-  //     title: "How to calculate royalty payments correctly?",
-  //     category: "Royalty Payments",
-  //     author: "Sarah Mitchell",
-  //     replies: 12,
-  //     url: "/posts/1",
-  //     timeAgo: "2 hours ago",
-  //   },
-  //   {
-  //     id: 2,
-  //     title: "Best practices for lease negotiation terms",
-  //     category: "Lease Negotiation",
-  //     author: "Marcus Rodriguez",
-  //     replies: 23,
-  //     url: "/posts/2",
-  //     timeAgo: "4 hours ago",
-  //   },
-  //   {
-  //     id: 3,
-  //     title: "Understanding mineral rights ownership",
-  //     category: "Mineral Rights",
-  //     author: "Jennifer Walsh",
-  //     replies: 8,
-  //     url: "/posts/3",
-  //     timeAgo: "6 hours ago",
-  //   },
-  //   {
-  //     id: 4,
-  //     title: "Royalty payment delays - what are my options?",
-  //     category: "Royalty Payments",
-  //     author: "David Chen",
-  //     replies: 15,
-  //     url: "/posts/4",
-  //     timeAgo: "8 hours ago",
-  //   },
-  //   {
-  //     id: 5,
-  //     title: "Lease negotiation tips for first-time landowners",
-  //     category: "Lease Negotiation",
-  //     author: "Texas Landman",
-  //     replies: 19,
-  //     url: "/posts/5",
-  //     timeAgo: "12 hours ago",
-  //   },
-  //   {
-  //     id: 6,
-  //     title: "How to verify drilling operations on my property?",
-  //     category: "Drilling Operations",
-  //     author: "Property Owner",
-  //     replies: 7,
-  //     url: "/posts/6",
-  //     timeAgo: "1 day ago",
-  //   },
-  //   {
-  //     id: 7,
-  //     title: "Tax implications of mineral rights income",
-  //     category: "Tax Questions",
-  //     author: "Tax Expert",
-  //     replies: 11,
-  //     url: "/posts/7",
-  //     timeAgo: "1 day ago",
-  //   },
-  //   {
-  //     id: 8,
-  //     title: "Legal issues with surface damage compensation",
-  //     category: "Legal Issues",
-  //     author: "Legal Eagle",
-  //     replies: 14,
-  //     url: "/posts/8",
-  //     timeAgo: "2 days ago",
-  //   },
-  // ]
+
 
   const navigationItems = [
     {
@@ -203,8 +131,8 @@ const [recentThreads, setRecentThreads] = useState<any[]>([]);
 
   // media
 const editorRef = useRef<HTMLDivElement>(null); // Add this at the top of your component
-
-
+const [createGroupError, setCreateGroupError] = useState("");
+const [isCreatingGroup, setIsCreatingGroup] = useState(false);
 const [recentThreadSuggestions, setRecentThreadSuggestions] = useState<any[]>([]);
 
 const handleTitleChange = (value: string) => {
@@ -307,7 +235,9 @@ const handleSubmitQuestion = async () => {
     });
 
     const response = await addQuestion(formData); // Your API should accept FormData
-
+  toast.success("Successfully posted a question!");
+    setAskQuestionOpen(false); // Close the popup
+    handleDialogClose(); // Reset form fields if needed
     // ...existing success logic...
   } catch (error) {
     // ...existing error logic...
@@ -356,22 +286,47 @@ const handleSubmitQuestion = async () => {
     setAskQuestionOpen(false)
   }
 
-  const handleCreateGroup = () => {
-  
-    setCreateGroupOpen(false)
+const handleCreateGroup = async () => {
+  setIsCreatingGroup(true);
+  setCreateGroupError("");
+  try {
+    const payload = {
+      userId: uId,
+      username: userName,
+      email: uEmailId,
+      groupName: newGroupData.name,
+      groupDesc: newGroupData.description,
+      invitedEmails: newGroupData.invitations
+    .split(",")
+    .map(email => email.trim())
+    .filter(email => email.length > 0),
+  personalMsg: newGroupData.body,
+  hashTags: Array.isArray(newGroupData.hashtags)
+    ? newGroupData.hashtags
+    : [],
+    };
+
+    await createPrivateGroup(payload);
+
+    toast.success("Group created successfully!");
+    setCreateGroupOpen(false);
     setNewGroupData({
       name: "",
       description: "",
       invitations: "",
-      subject: "You're invited to join our private group",
-      privacy: "private",
-      category: "Regional",
-      body: "Join our new private group!",
-    })
-
-    toast(`Your group "${newGroupData.name}" has been created and invitations sent.`
-    )
+      subject: "",
+      privacy: "",
+      category: "",
+      body: "",
+      hashtags: [],
+    });
+    // window.location.href = "/my-groups";
+  } catch (err) {
+    setCreateGroupError("Failed to create group. Please try again.");
+  } finally {
+    setIsCreatingGroup(false);
   }
+};
 
   const highlightMatch = (text: string, searchTerm: string) => {
     if (!searchTerm.trim()) return text
@@ -389,24 +344,52 @@ const handleSubmitQuestion = async () => {
       ),
     )
   }
+  const [groupTab, setGroupTab] = useState<"public" | "private">("public");
+const [privateGroups, setPrivateGroups] = useState<{ grpId: number; grpName: string; hashtags: any[]; url?: string }[]>([]);
   // Fetch public groups only when opening the Ask Question dialog
-const handleOpenAskQuestion = async () => {
+ const handleOpenAskQuestion = async () => {
     const response = await getPublicGroups()
-    setPublicGroups(
-      Array.isArray(response)
-        ? response.map((g: any) => ({ grpId: g.grpId, grpName: g.grpName,hashtags:g.hashtags,url:g.url }))
-        : []
-    )
-    
-  // Fetch recent threads
-  try {
-    const recent = await getRecentActivity();
-    setRecentThreads(Array.isArray(recent) ? recent : []);
-  } catch (err) {
-    setRecentThreads([]);
+    const publicList = Array.isArray(response)
+      ? response.map((g: any) => ({ grpId: g.grpId, grpName: g.grpName, hashtags: g.hashtags, url: g.url }))
+      : []
+    setPublicGroups(publicList)
+
+    // Select first public group by default if none selected
+    // if (publicList.length > 0 && !questionData.category) {
+    //   setQuestionData(q => ({
+    //     ...q,
+    //     category: publicList[0].grpName,
+    //     grpId: publicList[0].grpId,
+    //     hashtags: publicList[0].hashtags || [],
+    //     url: publicList[0].url || "",
+    //   }))
+    // }
+
+    try {
+      const userId = uId ? `PRV_${uId}` : "";
+      const privateResponse = await getPrivateGroupByCode(userId);
+      setPrivateGroups(
+        Array.isArray(privateResponse.groups)
+          ? privateResponse.groups.map((g: any) => ({
+            grpId: g.prvgrpId,
+            grpName: g.prvgrpName,
+            hashtags: g.hashTags,
+            url: "",
+          }))
+          : []
+      );
+    } catch (err) {
+      setPrivateGroups([]);
+    }
+    try {
+      const recent = await getRecentActivity();
+      setRecentThreads(Array.isArray(recent) ? recent : []);
+    } catch (err) {
+      setRecentThreads([]);
+    }
+    setGroupTab("public");
+    setAskQuestionOpen(true)
   }
-  setAskQuestionOpen(true)
-}
 // image 
 const fileInputRef = useRef<HTMLInputElement>(null);
   return (
@@ -429,48 +412,59 @@ const fileInputRef = useRef<HTMLInputElement>(null);
 
       {/* Navigation */}
       <nav className="flex-1 p-4 space-y-2">
-        {navigationItems
-        .filter(item => {
-      // Only show "My Groups" and "Follow Request" if user is logged in
-      if (
-        (item.label === "My Groups" || item.label === "Follow Request") &&
-        !isLoggedIn
-      ) {
-        return false;
-      }
-      return true;
-    })
-        .map((item) => {
-          const Icon = item.icon
-          const isActive = pathname === item.href
+  {navigationItems.map((item) => {
+    const Icon = item.icon;
+    const isActive = pathname === item.href;
 
-          if (item.isAction) {
-            return (
-              <button
-                key={item.label}
-                onClick={() => setCreateGroupOpen(true)}
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors w-full text-left hover:bg-slate-600`}
-              >
-                <Icon className={`h-5 w-5 ${item.iconColor}`} fill="currentColor" />
-                <span>{item.label}</span>
-              </button>
-            )
+    // Always show My Groups and Follow Request, but intercept click if not logged in
+    const isProtected =
+      item.label === "My Groups" || item.label === "Follow Request";
+
+    if (item.isAction) {
+      return (
+        <button
+          key={item.label}
+          onClick={() => setCreateGroupOpen(true)}
+          className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors w-full text-left hover:bg-slate-600`}
+        >
+          <Icon className={`h-5 w-5 ${item.iconColor}`} fill="currentColor" />
+          <span>{item.label}</span>
+        </button>
+      );
+    }
+
+    // If protected and not logged in, show as button that triggers login popup
+    if (isProtected && !isLoggedIn) {
+      return (
+        <button
+          key={item.href}
+          type="button"
+          onClick={() =>
+            executeWithAuth(() => {}, item.label.toLowerCase())
           }
+          className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors w-full text-left hover:bg-slate-600`}
+        >
+          <Icon className={`h-5 w-5 ${item.iconColor}`} fill="currentColor" />
+          <span>{item.label}</span>
+        </button>
+      );
+    }
 
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors ${
-                isActive ? "bg-slate-600 text-white" : "hover:bg-slate-600"
-              }`}
-            >
-              <Icon className={`h-5 w-5 ${item.iconColor}`} fill="currentColor" />
-              <span className={isActive ? "font-medium" : ""}>{item.label}</span>
-            </Link>
-          )
-        })}
-      </nav>
+    // Normal navigation
+    return (
+      <Link
+        key={item.href}
+        href={item.href}
+        className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors ${
+          isActive ? "bg-slate-600 text-white" : "hover:bg-slate-600"
+        }`}
+      >
+        <Icon className={`h-5 w-5 ${item.iconColor}`} fill="currentColor" />
+        <span className={isActive ? "font-medium" : ""}>{item.label}</span>
+      </Link>
+    );
+  })}
+</nav>
 
       {/* Ask Question Button */}
       {/* <div className="p-4"> */}
@@ -607,7 +601,7 @@ const fileInputRef = useRef<HTMLInputElement>(null);
                       >
                         <ListOrdered className="h-4 w-4" />
                       </button>
-                      <button
+                      {/* <button
                         type="button"
                         onClick={() => {
                           const url = prompt("Enter URL:")
@@ -617,7 +611,7 @@ const fileInputRef = useRef<HTMLInputElement>(null);
                         title="Insert Link"
                       >
                         <Link2 className="h-4 w-4" />
-                      </button>
+                      </button> */}
                {/* Camera Button */}
   <label className="p-2 hover:bg-gray-200 rounded transition-colors cursor-pointer text-black flex items-center" title="Attach Image/Video">
   <Camera className="h-5 w-5 text-black" />
@@ -723,10 +717,9 @@ const fileInputRef = useRef<HTMLInputElement>(null);
                   </div>
 
                   {/* Category Selection */}
-                  <div className="space-y-3">
+                  {/* <div className="space-y-3">
                     <Label className="text-sm lg:text-base">Category (Based on Public Groups) *</Label>
                     <div className="space-y-3">
-                      {/* Category Tabs */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                        {(showAllCategories ? publicGroups : publicGroups.slice(0, defaultCategoriesCount)).map(
   (group) => (
@@ -745,7 +738,7 @@ const fileInputRef = useRef<HTMLInputElement>(null);
   )
 )}
 
-                        {/* Show More/Less Button */}
+                       
                         <button
                           type="button"
                           onClick={() => setShowAllCategories(!showAllCategories)}
@@ -755,8 +748,75 @@ const fileInputRef = useRef<HTMLInputElement>(null);
                         </button>
                       </div>
                     </div>
-                    {/* <p className="text-xs lg:text-sm text-gray-500">Select the category that best fits your question</p> */}
-                  </div>
+                    </div> */}
+             <div className="space-y-3">
+  {/* Tabs for Public/Private Groups */}
+<div className="flex gap-2 mb-2">
+  <Button
+    variant={groupTab === "public" ? "default" : "outline"}
+    onClick={() => setGroupTab("public")}
+    className={groupTab === "public" ? "bg-orange-500 text-white" : ""}
+  >
+    Public Groups
+  </Button>
+  <Button
+    variant={groupTab === "private" ? "default" : "outline"}
+    onClick={() => privateGroups.length > 0 && setGroupTab("private")}
+    className={groupTab === "private" ? "bg-orange-500 text-white" : ""}
+    disabled={privateGroups.length === 0}
+  >
+    Private Groups
+  </Button>
+</div>
+
+  {/* Selected Group Name */}
+  {/* {questionData.category && (
+    <div className="mb-2 text-sm text-gray-700">
+      Selected Group: <span className="font-semibold">{questionData.category}</span>
+    </div>
+  )} */}
+
+  {/* Group Selection */}
+  <div className="space-y-3">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+      {(groupTab === "public"
+        ? (showAllCategories ? publicGroups : publicGroups.slice(0, 4))
+        : privateGroups
+      ).map((group) => (
+        <button
+          key={group.grpId}
+          type="button"
+          onClick={() =>
+            setQuestionData({
+              ...questionData,
+              category: group.grpName,
+              grpId: group.grpId,
+              hashtags: group.hashtags || [],
+              url: group.url || "",
+            })
+          }
+          className={`px-3 py-2 text-xs lg:text-sm rounded-lg border transition-colors text-left ${
+            questionData.category === group.grpName
+              ? "bg-orange-500 text-white border-orange-500"
+              : "bg-white border-gray-300 hover:border-orange-300 hover:bg-orange-50"
+          }`}
+        >
+          {group.grpName}
+        </button>
+      ))}
+    </div>
+    {/* Show More/Less Button for Public Groups only */}
+    {groupTab === "public" && publicGroups.length > 4 && (
+      <button
+        type="button"
+        onClick={() => setShowAllCategories(!showAllCategories)}
+        className="px-3 py-2 text-xs lg:text-sm rounded-lg border border-orange-300 text-orange-600 hover:bg-orange-50 transition-colors text-left font-medium"
+      >
+        {showAllCategories ? "Show Less" : "Show More"}
+      </button>
+    )}
+  </div>
+</div>
                 </div>
               </div>
 
@@ -855,88 +915,18 @@ const fileInputRef = useRef<HTMLInputElement>(null);
       {/* </div> */}
 
       {/* Create Group Dialog */}
-      <Dialog open={createGroupOpen} onOpenChange={setCreateGroupOpen}>
-        <DialogContent className="max-w-4xl w-[95vw] sm:w-[90vw] lg:w-[800px] max-h-[90vh] p-3">
-          <DialogHeader className="gap-x-2 pb-0">
-            <DialogTitle>Create Private Group</DialogTitle>
-          </DialogHeader>
-          <div className="grid grid-cols-2 gap-6 py-2 pt-0">
-            {/* Left Column: Group Name and Description */}
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="group-name">Group Name *</Label>
-                <Input
-                  id="group-name"
-                  placeholder="Enter group name..."
-                  value={newGroupData.name}
-                  onChange={(e) => setNewGroupData({ ...newGroupData, name: e.target.value })}
-                />
-              </div>
+       {/* Create Group Popup */}
+      <CreateGroupPopup
+        open={createGroupOpen}
+        onOpenChange={setCreateGroupOpen}
+        newGroupData={newGroupData}
+        setNewGroupData={setNewGroupData}
+        handleCreateGroup={handleCreateGroup}
+        isLoading={isCreatingGroup}
+        error={createGroupError}
+      />
 
-                 <div className="space-y-2">
-                <Label htmlFor="group-description" className="text-base font-medium">
-                  Group Description *
-                </Label>
-                <Textarea
-                  id="group-description"
-                  placeholder="Describe the purpose of your group, what topics will be discussed, and what members can expect..."
-                  value={newGroupData.description || ""}
-                  onChange={(e) => setNewGroupData({ ...newGroupData, description: e.target.value })}
-                  rows={6}
-                  className="text-base resize-none"
-                />
-              </div>
-            </div>
-
-            {/* Right Column: Invitations */}
-            <div className="space-y-4 overflow-y-auto">
-              <div className="space-y-2">
-                <Label htmlFor="group-invitations">Invitations (Email IDs)</Label>
-                <Textarea
-                  id="group-invitations"
-                  placeholder="Enter email addresses separated by commas (e.g., john@example.com, jane@example.com)"
-                  value={newGroupData.invitations || ""}
-                  onChange={(e) => setNewGroupData({ ...newGroupData, invitations: e.target.value })}
-                  rows={3}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="invitation-subject">Invitation Subject *</Label>
-                <Input
-                  id="invitation-subject"
-                  placeholder="Subject for invitation email..."
-                  value={newGroupData.subject || "You're invited to join our private group"}
-                  onChange={(e) => setNewGroupData({ ...newGroupData, subject: e.target.value })}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="invitation-body">Invitation Body *</Label>
-                <Textarea
-                  id="invitation-body"
-                  placeholder="Body for invitation email..."
-                  value={newGroupData.body || "Join our new private group!"}
-                  onChange={(e) => setNewGroupData({ ...newGroupData, body: e.target.value })}
-                  rows={3}
-                />
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCreateGroupOpen(false)}>
-              Cancel
-            </Button>
-            <Button
-              onClick={handleCreateGroup}
-              disabled={!newGroupData.name.trim() || !newGroupData.description?.trim() || !newGroupData.subject?.trim()}
-              className="bg-green-600 hover:bg-green-700"
-            >
-              Create Group & Send Invitations
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+    
         {/* Login Popup */}
       <LoginPopup
         isOpen={loginPopupState.isOpen}

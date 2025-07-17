@@ -163,3 +163,34 @@ export interface Data {
   isTrialPeriod: boolean
   token: string
 }
+// create group response interface
+export interface CreateGroupResponseInterface {
+ 
+  message: string
+  prvId: string
+  prvgrpCode: string
+
+}
+// Private group interface
+export interface PrivateGroup {
+  prvgrpId: number;
+  prvgrpName: string;
+  prvgrpDesc: string;
+  prvgrpCode: string;
+  grpImg: string | null;
+  uRole: string;
+  createTS: string;
+  joinTS: string;
+  hashTags: string[];
+  userCount: number;
+  postCount: number;
+  lastActivity: string;
+}
+
+export interface CreateGroupResponseInterface {
+  _id: string;
+  prvId: string;
+  email: string;
+  groups: PrivateGroup[]; // <-- Add this line!
+  username: string;
+}

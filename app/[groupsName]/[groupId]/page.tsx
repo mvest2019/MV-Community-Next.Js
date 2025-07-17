@@ -27,13 +27,16 @@ import {
   Reply,
 } from "lucide-react"
 import Image from "next/image"
-import { useParams } from "next/navigation"
+import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { AppLayout } from "@/components/app-layout"
 import Link from "next/link"
 import { useEffect, useRef, useState } from "react"
-import { getGroupThreads, getGroupView } from "@/services/service"
+import { getGroupThreads, getGroupView, joinPrivateGroup } from "@/services/service"
 import { GroupThreadsDataInterface, GroupThreadsInterface } from "@/types/community-types"
 import { Skeleton } from "@/components/ui/skeleton"
+import { LoginPopup } from "@/components/login-popup"
+import { useAuth } from "@/hooks/use-auth"
+import { toast } from "sonner"
 
 export default function GroupPage() {
   const params = useParams()
@@ -150,6 +153,45 @@ function formatUrlTitle(url: string) {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
+const searchParams = useSearchParams();
+  const code = searchParams.get("code");
+  const [joined, setJoined] = useState(false);
+  // Replace with your real auth logic
+ const { isLoggedIn } = useAuth(); // <-- Use your real auth state
+  const [showLoginPopup, setShowLoginPopup] = useState(false);
+  const router = useRouter();
+
+  // Use a ref to track if login was successful
+  const loginSuccessRef = useRef(false);
+
+  // Show login popup if code exists and not logged in
+  useEffect(() => {
+    if (code && !isLoggedIn) {
+      setShowLoginPopup(true);
+    } else {
+      setShowLoginPopup(false);
+    }
+  }, [code, isLoggedIn]);
+
+  // Handle login popup close/cancel
+  const handleLoginPopupClose = () => {
+    setShowLoginPopup(false);
+    setTimeout(() => {
+      // Only redirect if popup was closed/canceled and NOT after successful login
+      if (!isLoggedIn && !loginSuccessRef.current) {
+        router.push("/community");
+      }
+      // Reset the ref for next time
+      loginSuccessRef.current = false;
+    }, 100);
+  };
+
+  // Handle successful login
+  const handleLoginSuccess = () => {
+    loginSuccessRef.current = true;
+    setShowLoginPopup(false);
+    // isLoggedIn should now be true, so popup will not show again
+  };
   return (
     <AppLayout
       backLink={{
@@ -159,6 +201,13 @@ function formatUrlTitle(url: string) {
       }}
       searchPlaceholder="Search in group..."
     >
+       {/* Login Popup */}
+   <LoginPopup
+        isOpen={showLoginPopup}
+        onClose={handleLoginPopupClose}
+        onLoginSuccess={handleLoginSuccess}
+        actionMessage=""
+      />
       {/* Group Header */}
       <div className="relative h-32 bg-gradient-to-br from-blue-500 to-purple-600 overflow-hidden">
         <Image src={groupData.coverImage || "/placeholder.svg"} alt={groupData.name} fill className="object-cover" />
@@ -203,10 +252,25 @@ function formatUrlTitle(url: string) {
               </div>
             </div>
             <div className="flex gap-2">
-              {/* <Button variant="secondary" className="bg-white/20 text-white border-white/30 hover:bg-white/30">
-                <Plus className="h-4 w-4 mr-2" />
-                Post
-              </Button> */}
+                       {/* --- JOIN BUTTON HERE --- */}
+              {code && isLoggedIn && !joined && (
+                <div className="flex justify-center mb-4">
+                  <Button
+                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded"
+                      onClick={async () => {
+        try {
+          await joinPrivateGroup(code);
+          setJoined(true);
+          toast.success("You have joined this group");
+        } catch (err: any) {
+         
+        }
+      }}
+                  >
+                    Join Group
+                  </Button>
+                </div>
+              )}
               <Button variant="secondary" className="bg-white/20 text-white border-white/30 hover:bg-white/30">
                 <Users className="h-4 w-4 mr-2" />
                 Members
@@ -219,6 +283,12 @@ function formatUrlTitle(url: string) {
       {/* Group Posts */}
       <div className="p-4 lg:p-6">
         <div className="max-w-4xl mx-auto">
+   
+      {/* {joined && (
+        <div className="flex justify-center mb-4 text-green-600 font-semibold">
+          You have joined this group!
+        </div>
+      )} */}
           <div className="mb-4">
             <h2 className="text-xl font-semibold text-gray-900 mb-2">Recent Posts</h2>
           </div>
@@ -419,34 +489,7 @@ function formatUrlTitle(url: string) {
         </div>
       </div>
    
-  {/* {totalPages > 1 && (
-    <div className="flex items-center justify-between mt-8 p-4 bg-gray-50 rounded-lg">
-      <div className="flex items-center gap-2">
-        <Button onClick={handlePreviousPage} disabled={currentPage === 1} variant="outline" size="sm">
-          Previous
-        </Button>
-        <div className="flex items-center gap-1">
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNumber) => (
-            <Button
-              key={pageNumber}
-              onClick={() => handlePageClick(pageNumber)}
-              variant={currentPage === pageNumber ? "default" : "outline"}
-              size="sm"
-              className="w-8 h-8 p-0"
-            >
-              {pageNumber}
-            </Button>
-          ))}
-        </div>
-        <Button onClick={handleNextPage} disabled={currentPage === totalPages} variant="outline" size="sm">
-          Next
-        </Button>
-      </div>
-      <div className="text-sm text-gray-600">
-        Page {currentPage} of {totalPages} ({groupThreads?.total ?? 0} total posts)
-      </div>
-    </div>
-  )} */}
+ 
     </AppLayout>
   )
 }

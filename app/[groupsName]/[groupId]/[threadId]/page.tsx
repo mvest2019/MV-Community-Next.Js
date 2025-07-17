@@ -109,10 +109,7 @@ const [commentVotes, setCommentVotes] = useState<{
   [key: number]: { upvotes: number; downvotes: number; userVote: "upvote" | "downvote" | null }
 }>({});
 
-// // Answer voting state
-// const [answerCommentVotes, setAnswerCommentVotes] = useState<{
-//   [key: string]: { upvotes: number; downvotes: number; userVote: "upvote" | "downvote" | null }
-// }>({});
+const [pendingFollowUser, setPendingFollowUser] = useState<string | null>(null);
   
   // Sample user profiles data
   const userProfiles = {
@@ -309,16 +306,6 @@ console.log(isLoggedIn, "isLoggedIn in PostDetailPage");
       grpName: threadDetail.grpName,
       threadId: threadDetail.threadId,
     });
-
-    // Option 1: If API returns the new answer object:
-    // setAnswers((prev) => [
-    //   ...prev,
-    //   {
-    //     ...response, // Make sure response matches your answer object shape
-    //     isAccepted: false,
-    //     comments: [],
-    //   },
-    // ]);
 
   // Add the new reply to the UI immediately
     setThreadDetail((prev) => {
@@ -717,7 +704,7 @@ const handleAcceptAnswer = async (postId: number) => {
                       ) : (
                         <>
                           <Bell className="h-4 w-4" />
-                          <span className="hidden sm:inline">Get Post Alerts</span>
+                          <span className="hidden sm:inline">Get Post Notify</span>
                           <span className="sm:hidden">Notify</span>
                         </>
                       )}
@@ -782,16 +769,7 @@ const handleAcceptAnswer = async (postId: number) => {
                       className="prose prose-gray max-w-none mb-4"
                       dangerouslySetInnerHTML={{ __html: threadDetail.posts[0]?.content }}
                     />
-{threadDetail.posts[0]?.fileURL && threadDetail.posts[0].fileURL.startsWith("http") && (
-  <div className="mb-4">
-    <img
-      src={threadDetail.posts[0].fileURL}
-      alt="Post Attachment"
-      className="max-w-full rounded-lg border"
-    />
-  </div>
-)}
-                    {/* Tags */}
+                                  {/* Tags */}
                 <div className="flex flex-wrap gap-2 mb-4">
   {Array.isArray(threadDetail.hashtags) && threadDetail.hashtags.length > 0 &&
     threadDetail.hashtags.map((tag: string, idx: number) => (
@@ -805,6 +783,16 @@ const handleAcceptAnswer = async (postId: number) => {
     ))
   }
 </div>
+{threadDetail.posts[0]?.fileURL && threadDetail.posts[0].fileURL.startsWith("http") && (
+  <div className="mb-4">
+    <img
+      src={threadDetail.posts[0].fileURL}
+      alt="Post Attachment"
+      className="max-w-full rounded-lg border"
+    />
+  </div>
+)}
+      
 
                     {/* Question Actions */}
                     <div className="flex items-center gap-4">
@@ -1459,7 +1447,7 @@ const handleAcceptAnswer = async (postId: number) => {
 
                       {/* Follow Button */}
                       {/* {selectedUser.username !== "SarahM_Landowner" && ( */}
-                        <Button
+                        {/* <Button
                           onClick={() => handleFollowToggle(selectedUser.username)}
                           className={`w-full ${
                             followingUsers.has(selectedUser.username)
@@ -1468,7 +1456,24 @@ const handleAcceptAnswer = async (postId: number) => {
                           }`}
                         >
                           {followingUsers.has(selectedUser.username) ? "Unfollow" : "Send Follow Request"}
-                        </Button>
+                        </Button> */}
+                        <Button
+  onClick={() => {
+    if (!isLoggedIn) {
+      setPendingFollowUser(selectedUser.username);
+      setShowLoginPopup(true);
+      return;
+    }
+    handleFollowToggle(selectedUser.username);
+  }}
+  className={`w-full ${
+    followingUsers.has(selectedUser.username)
+      ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
+      : "bg-blue-600 text-white hover:bg-blue-700"
+  }`}
+>
+  {followingUsers.has(selectedUser.username) ? "Unfollow" : "Send Follow Request"}
+</Button>
                       {/* // )} */}
                     </div>
                   </div>
@@ -1483,7 +1488,13 @@ const handleAcceptAnswer = async (postId: number) => {
   isOpen={showLoginPopup}
   onClose={() => setShowLoginPopup(false)}
   actionMessage=""
- onLoginSuccess={() => setShowLoginPopup(false)}
+  onLoginSuccess={() => {
+    setShowLoginPopup(false);
+    if (pendingFollowUser) {
+      handleFollowToggle(pendingFollowUser);
+      setPendingFollowUser(null);
+    }
+  }}
 />
     </AppLayout>
   )

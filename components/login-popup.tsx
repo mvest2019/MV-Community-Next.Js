@@ -26,7 +26,35 @@ export function LoginPopup({ isOpen, onClose, actionMessage, onLoginSuccess }: L
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
 
-  
+  // forgot password state
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetError, setResetError] = useState("");
+  const [resetSuccess, setResetSuccess] = useState("");
+  // Function to handle forgot password
+  const handleSendResetLink = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setResetError("");
+  setResetSuccess("");
+  setResetLoading(true);
+
+  // Replace with your actual API endpoint
+  try {
+    const response = await fetch("https://mview-info.mineralview.com/User/forgot_password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email_id: resetEmail }),
+    });
+    if (!response.ok) throw new Error("Failed to send reset link");
+    setResetSuccess("Reset link sent! Please check your email.");
+  } catch (err) {
+    setResetError("Failed to send reset link. Please try again.");
+  } finally {
+    setResetLoading(false);
+  }
+};
+
 const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
   setError("");
@@ -83,100 +111,183 @@ function isValidEmail(email: string) {
 function isValidPassword(password: string) {
   return password.length >= 6; // or your own rule
 }
-  return (
+return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-lg">
-            {/* <Lock className="h-5 w-5 text-orange-500" /> */}
-      <Image
-                    src="/images/mineralview-logo.png"
-                    alt="MineralView Logo"
-                    width={32}
-                    height={32}
-                    className="rounded-lg"
-                  />
-            Login Required
-          </DialogTitle>
-        </DialogHeader>
+  <DialogTitle className="flex items-center gap-2 text-lg">
+    {!showForgotPassword ? (
+      <>
+        <Image
+          src="/images/mineralview-logo.png"
+          alt="MineralView Logo"
+          width={32}
+          height={32}
+          className="rounded-lg"
+        />
+        Login Required
+      </>
+    ) : (
+      <>
+        <button
+          type="button"
+          onClick={() => {
+            setShowForgotPassword(false);
+            setResetEmail("");
+            setResetError("");
+            setResetSuccess("");
+          }}
+          className="p-1 rounded hover:bg-gray-100"
+          aria-label="Back"
+        >
+          <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <span className="font-semibold text-orange-700 text-base">Reset Password</span>
+      </>
+    )}
+  </DialogTitle>
+</DialogHeader>
 
         <div className="space-y-4 py-2">
-          {/* Dynamic Message */}
           <Alert className="border-orange-200 bg-orange-50">
             <AlertCircle className="h-4 w-4 text-orange-600" />
-            <AlertDescription className="text-orange-800">🔔 You must be logged in to {actionMessage}</AlertDescription>
-          </Alert>
+            <AlertDescription className={showForgotPassword ? "text-blue-800" : "text-orange-800"}>
+      {!showForgotPassword
+        ? <>🔔 You must be logged in to {actionMessage}</>
+        : <>Enter your email to receive password reset instructions</>
+      }
+    </AlertDescription> </Alert>
 
-          {/* Login Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email" className="flex items-center gap-2">
+          {!showForgotPassword ? (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email" className="flex items-center gap-2">
+                  <Mail className="h-4 w-4" />
+                  Email
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  disabled={isLoading}
+                  className="h-11"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="password" className="flex items-center gap-2">
+                  <Lock className="h-4 w-4" />
+                  Password
+                </Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  disabled={isLoading}
+                  className="h-11"
+                />
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setShowForgotPassword(true)}
+                    className="text-xs text-orange-600 hover:text-orange-700 underline"
+                  >
+                    Forgot Password?
+                  </button>
+                </div>
+              </div>
+
+              {error && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+
+              <div className="flex gap-3 pt-2">
+                <Button type="button" variant="outline" onClick={handleClose} disabled={isLoading} className="flex-1">
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={isLoading || !email.trim() || !password.trim()}
+                  className="flex-1 bg-orange-500 hover:bg-orange-600"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Logging in...
+                    </>
+                  ) : (
+                    "Login"
+                  )}
+                </Button>
+              </div>
+                <div className="text-center">
+            <button
+              type="button"
+              onClick={() => {
+                window.open("https://mview-presentation-next.vercel.app/register-plan", "_blank");
+              }}
+              className="text-sm text-orange-600 hover:text-orange-700 underline"
+            >
+              Don't have an account? Register
+            </button>
+          </div>
+            </form>
+          ) : (
+            <form onSubmit={handleSendResetLink} className="space-y-4">
+             
+              <Label htmlFor="reset-email" className="flex items-center gap-2">
                 <Mail className="h-4 w-4" />
                 Email
               </Label>
               <Input
-                id="email"
+                id="reset-email"
                 type="email"
                 placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={resetEmail}
+                onChange={(e) => setResetEmail(e.target.value)}
                 required
-                disabled={isLoading}
+                disabled={resetLoading}
                 className="h-11"
               />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password" className="flex items-center gap-2">
-                <Lock className="h-4 w-4" />
-                Password
-              </Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                disabled={isLoading}
-                className="h-11"
-              />
-            </div>
-
-            {error && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-
-            <div className="flex gap-3 pt-2">
-              <Button type="button" variant="outline" onClick={handleClose} disabled={isLoading} className="flex-1">
-                Cancel
-              </Button>
+              {resetError && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{resetError}</AlertDescription>
+                </Alert>
+              )}
+              {resetSuccess && (
+                <Alert className="border-green-200 bg-green-50">
+                  <AlertCircle className="h-4 w-4 text-green-600" />
+                  <AlertDescription className="text-green-800">{resetSuccess}</AlertDescription>
+                </Alert>
+              )}
               <Button
                 type="submit"
-                disabled={isLoading || !email.trim() || !password.trim()}
-                className="flex-1 bg-orange-500 hover:bg-orange-600"
+                disabled={resetLoading || !resetEmail.trim()}
+                className="w-full bg-orange-500 hover:bg-orange-600"
               >
-                {isLoading ? (
+                {resetLoading ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Logging in...
+                    Sending...
                   </>
                 ) : (
-                  "Login"
+                  "Send reset link"
                 )}
               </Button>
-            </div>
-          </form>
+            </form>
+          )}
 
-          {/* Demo Credentials */}
-          {/* <div className="text-xs text-gray-500 bg-gray-50 p-3 rounded-lg">
-            <p className="font-medium mb-1">Demo Credentials:</p>
-            <p>Email: any valid email</p>
-            <p>Password: any password</p>
-          </div> */}
+        
         </div>
       </DialogContent>
     </Dialog>

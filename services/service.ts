@@ -1,28 +1,8 @@
 // 'use client';
 
 import axios from 'axios';
-import { AddQuestionRequestInterface, AskQuestionResponseInterface, GroupThreadDetailsInterface, GroupThreadsInterface, PublicGroupInterface } from "@/types/community-types";
+import { AddQuestionRequestInterface, AskQuestionResponseInterface, CreateGroupResponseInterface, GroupThreadDetailsInterface, GroupThreadsInterface, PublicGroupInterface } from "@/types/community-types";
 
-// export const addQuestion = async (
-//  payload: AddQuestionRequestInterface,
-// ): Promise<AskQuestionResponseInterface[]> => {
- 
-//   try {
-//     const response = await axios.post(
-//       `https://mineralview-community.mineralview.com/api/thread/post`,
-//       payload,
-//     );
-   
-//     if (response.status === 201) {
-//       return response.data;
-//     } else {
-//       throw new Error('post not created');
-//     }
-//   } catch (error) {
-   
-//     throw new Error(String(error) || 'An error occurred while adding the question');
-//   }
-// };
 
 // media
 export async function addQuestion(formData: FormData) {
@@ -133,4 +113,52 @@ export async function getLatestBlogs() {
     }
   );
   return response.data;
+}
+// for creating a new group
+export async function createPrivateGroup(payload: {
+  userId: number;
+  username: string;
+  email: string;
+  groupName: string;
+  groupDesc: string;
+}) {
+  const response = await fetch("https://mineralview-community.mineralview.com/api/private-groups/create", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to create group");
+  }
+
+  return response.json();
+}
+// Fetch private group details by prvgrpCode
+export async function getPrivateGroupByCode(prvgrpCode: string): Promise<CreateGroupResponseInterface> {
+  const url = `https://mineralview-community.mineralview.com/api/getprivate-groups/${prvgrpCode}`;
+  const response = await fetch(url, {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch private group details");
+  }
+
+  return response.json();
+}
+// join group
+export async function joinPrivateGroup(inviteCode: string) {
+  const response = await fetch("https://mineralview-community.mineralview.com/api/private-groups/join", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ inviteCode }),
+  });
+  if (!response.ok) {
+    throw new Error("Failed to join group");
+  }
+  return response.json();
 }
