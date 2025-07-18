@@ -11,13 +11,18 @@ import { useEffect, useState } from "react"
 import { AppLayout } from "@/components/app-layout"
 import { ManageGroupDialog } from "@/components/manage-group-dialog"
 import { getPrivateGroupByCode } from "@/services/service"
+import { useAuth } from "@/hooks/use-auth"
 
 export default function MyGroupsPage() {
   const [confirmLeave, setConfirmLeave] = useState<number | null>(null)
     const [groupDetails, setGroupDetails] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
+  const { isLoggedIn } = useAuth(); 
+    const userStr = typeof window !== "undefined" ? localStorage.getItem("user") : null;
+  
+  const user = userStr ? JSON.parse(userStr) : null;
+const uId = user?.member_id;
   // Sample created groups data - only groups created by the user
   const [createdGroups, setCreatedGroups] = useState([
     {
@@ -145,7 +150,7 @@ export default function MyGroupsPage() {
   const handleCardClick = (groupId: number) => {
     window.location.href = `/groups/${groupId}`
   }
-  const prvgrpCode = "PRV_1300";
+  const prvgrpCode = uId ? `PRV_${uId}` : "";
 useEffect(() => {
     const fetchGroupDetails = async () => {
       setLoading(true);
