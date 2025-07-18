@@ -160,7 +160,9 @@ const searchParams = useSearchParams();
  const { isLoggedIn } = useAuth(); // <-- Use your real auth state
   const [showLoginPopup, setShowLoginPopup] = useState(false);
   const router = useRouter();
-
+  const userStr = typeof window !== "undefined" ? localStorage.getItem("user") : null;
+const user = userStr ? JSON.parse(userStr) : null;
+const userId = user?.member_id;
   // Use a ref to track if login was successful
   const loginSuccessRef = useRef(false);
 
@@ -259,7 +261,8 @@ const searchParams = useSearchParams();
                     className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded"
                       onClick={async () => {
         try {
-          await joinPrivateGroup(code);
+           
+          await joinPrivateGroup(code, userId);
           setJoined(true);
           toast.success("You have joined this group");
         } catch (err: any) {

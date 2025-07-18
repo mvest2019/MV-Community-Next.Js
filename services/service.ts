@@ -149,13 +149,13 @@ export async function getPrivateGroupByCode(prvgrpCode: string): Promise<CreateG
   return response.json();
 }
 // join group
-export async function joinPrivateGroup(inviteCode: string) {
+export async function joinPrivateGroup(inviteCode: string, userId: string) {
   const response = await fetch("https://mineralview-community.mineralview.com/api/private-groups/join", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ inviteCode }),
+    body: JSON.stringify({ inviteCode, userId }),
   });
   if (!response.ok) {
     throw new Error("Failed to join group");
