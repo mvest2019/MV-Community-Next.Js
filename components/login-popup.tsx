@@ -93,7 +93,7 @@ const handleSubmit = async (e: React.FormEvent) => {
     onClose()
   }
   async function loginUser(email: string, password: string) {
-  const response = await fetch("https://mview-info.mineralview.com/User/login_user", {
+  const response = await fetch("https://testing-paymentapi.mineralview.com/User/login_user", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({

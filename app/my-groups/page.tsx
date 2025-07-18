@@ -22,7 +22,6 @@ export default function MyGroupsPage() {
     const userStr = typeof window !== "undefined" ? localStorage.getItem("user") : null;
   
   const user = userStr ? JSON.parse(userStr) : null;
-  console.log("Current user:", user);
 const uId = user?.member_id;
   // Sample created groups data - only groups created by the user
   const [createdGroups, setCreatedGroups] = useState([
@@ -151,7 +150,7 @@ const uId = user?.member_id;
   const handleCardClick = (groupId: number) => {
     window.location.href = `/groups/${groupId}`
   }
-  const prvgrpCode = "PRV_1300";
+  const prvgrpCode = uId ? `PRV_${uId}` : "";
 useEffect(() => {
     const fetchGroupDetails = async () => {
       setLoading(true);
