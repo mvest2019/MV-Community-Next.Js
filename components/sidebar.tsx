@@ -69,7 +69,7 @@ const userName = user ? `${user.f_name} ${user.l_name}` : "";
     subject: "You're invited to join our private group",
     privacy: "private",
     category: "Regional",
-    body: "Join our new private group!",
+    body: "",
     hashtags: [] as string[], // <-- Add this line
   })
   // media
@@ -224,6 +224,9 @@ const handleSubmitQuestion = async () => {
     formData.append("grpId", String(questionData.grpId));
     formData.append("url", String(questionData.url));
     formData.append("grpName", questionData.category || "Discussion");
+     // 👇 Add isPrivate based on groupTab
+    formData.append("isPrivate", groupTab === "private" ? "1" : "0");
+
    formData.append(
   "hashtags",
   (questionData.hashtags || [])
@@ -374,7 +377,7 @@ const [privateGroups, setPrivateGroups] = useState<{ grpId: number; grpName: str
             grpId: g.prvgrpId,
             grpName: g.prvgrpName,
             hashtags: g.hashTags,
-            url: "",
+            url: g.url,
           }))
           : []
       );

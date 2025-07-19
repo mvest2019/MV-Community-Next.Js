@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,6 +45,65 @@ const isInvitationFieldsFilled =
 
 const isFormValid =
   isLeftFieldsFilled || (isLeftFieldsFilled && isInvitationFieldsFilled);
+
+  // --- Hashtag input logic ---
+  const [hashtagInput, setHashtagInput] = useState("");
+const handleHashtagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  if ((e.key === " " || e.key === ",") && hashtagInput.trim()) {
+    e.preventDefault();
+    let tag = hashtagInput.trim().replace(/^#+/, "");
+    tag = "#" + tag;
+    if (
+      tag.length > 1 && // at least "#a"
+      !newGroupData.hashtags.includes(tag)
+    ) {
+      setNewGroupData({
+        ...newGroupData,
+        hashtags: [...newGroupData.hashtags, tag],
+      });
+    }
+    setHashtagInput("");
+  }
+  if (e.key === "Backspace" && !hashtagInput && newGroupData.hashtags.length) {
+    setNewGroupData({
+      ...newGroupData,
+      hashtags: newGroupData.hashtags.slice(0, -1),
+    });
+  }
+};
+
+  const handleRemoveHashtag = (idx: number) => {
+    setNewGroupData({
+      ...newGroupData,
+      hashtags: newGroupData.hashtags.filter((_, i) => i !== idx),
+    });
+  };
+const handleHashtagPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+  e.preventDefault();
+  const paste = e.clipboardData.getData("text");
+  // Split by comma, space, or both
+  const tags = paste
+    .split(/[\s,]+/)
+    .map(tag => tag.trim())
+    .filter(tag => tag.length > 0);
+
+  let newTags = [...newGroupData.hashtags];
+
+  tags.forEach(tag => {
+    // Remove all leading #, then add one #
+    let cleanTag = tag.replace(/^#+/, "");
+    cleanTag = "#" + cleanTag;
+    if (!newTags.includes(cleanTag)) {
+      newTags.push(cleanTag);
+    }
+  });
+
+  setNewGroupData({
+    ...newGroupData,
+    hashtags: newTags,
+  });
+  setHashtagInput("");
+};
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
        <DialogContent className="max-w-4xl w-[95vw] sm:w-[90vw] lg:w-[800px] max-h-[90vh] min-h-[400px] p-3">
@@ -77,25 +136,34 @@ const isFormValid =
                 />
               </div>
               <div className="space-y-2">
-  <Label htmlFor="group-hashtags">Hashtags (comma separated) *</Label>
-  <Input
-    id="group-hashtags"
-    placeholder="#oil, #gas, #energy"
-    value={Array.isArray(newGroupData.hashtags) ? newGroupData.hashtags.join(", ") : ""}
-    onChange={e =>
-      setNewGroupData({
-        ...newGroupData,
-        hashtags: e.target.value
-          .split(",")
-          .map(tag => tag.trim())
-          .filter(tag => tag.length > 0),
-      })
-    }
-    className="text-base"
-  />
- 
-</div>
+  <Label htmlFor="group-hashtags">Hashtags (comma or space separated) *</Label>
+              <div className="flex flex-wrap items-center gap-2 border rounded px-2 py-1 bg-white">
+              {newGroupData.hashtags.map((tag, idx) => (
+  <span key={tag} className="bg-blue-100 text-blue-700 px-2 py-1 rounded flex items-center">
+    {tag}
+    <button
+      type="button"
+      className="ml-1 text-red-500 hover:text-red-700"
+      onClick={() => handleRemoveHashtag(idx)}
+      aria-label="Remove tag"
+    >
+      ×
+    </button>
+  </span>
+))}
+            <Input
+  id="group-hashtags"
+  placeholder={newGroupData.hashtags.length === 0 ? "#oil, #gas, #energy" : ""}
+  value={hashtagInput}
+  onChange={e => setHashtagInput(e.target.value.replace(/[,]/g, ""))}
+  onKeyDown={handleHashtagKeyDown}
+  onPaste={handleHashtagPaste}
+  className="flex-1 border-none shadow-none outline-none min-w-[80px]"
+  style={{ boxShadow: "none" }}
+/>
+              </div>
             </div>
+          </div>
 
             
             <div className="space-y-4 overflow-y-auto px-2">
